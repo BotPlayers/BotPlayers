@@ -192,7 +192,8 @@ def stream_chat_completion(engine: str, messages: list, temperature: float,
 
 def run_chat(engine: str, t: float = 1.0):
     messages = [
-        {"role": "system", "content": "You are a helpful assistant. When calling functions, only use the functions you have been provided with."},
+        {"role": "system",
+         "content": "You are a helpful assistant. When calling functions, only use the functions you have been provided with."},
     ]
     while True:
         user_content = input("[user]: ")
@@ -246,7 +247,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--pandafan', action='store_true', default=False)
     parser.add_argument('--t', type=float, default=1.0)
-    parser.add_argument('--engine', type=str, default='gpt-3.5-turbo-16k')
+    parser.add_argument('--engine', type=str, default='gpt-4')
     parser.add_argument('--memory', type=str, default='memory.json')
     args = parser.parse_args()
 
