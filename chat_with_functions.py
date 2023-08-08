@@ -1,9 +1,9 @@
+import os
 import json
 import openai
 
 
 def setup_pandafan_proxy():
-    import os
     os.environ['HTTP_PROXY'] = 'http://127.0.0.1:10080'
     os.environ['HTTPS_PROXY'] = 'http://127.0.0.1:10080'
 
@@ -79,7 +79,8 @@ def gpt_callable(function: callable):
 
 @gpt_callable
 def calculator(expression: str):
-    """Calculate the result of a given expression.
+    """Calculate the result of a given expression. 
+    Note that only Python expressions are supported.
 
     Args:
         expression: The expression to be calculated.
@@ -248,20 +249,20 @@ if __name__ == '__main__':
     parser.add_argument('--pandafan', action='store_true', default=False)
     parser.add_argument('--t', type=float, default=1.0)
     parser.add_argument('--engine', type=str, default='gpt-4')
-    parser.add_argument('--memory', type=str, default='memory.json')
+    parser.add_argument('--memory', type=str, default=None)
     args = parser.parse_args()
 
     if args.pandafan:
         setup_pandafan_proxy()
 
     # Load memory
-    import os
-    if os.path.exists(args.memory):
+    if args.memory is not None and os.path.exists(args.memory):
         with open(args.memory, 'r') as f:
             GPT_MEMORY = json.load(f)
 
     run_chat(args.engine, args.t)
 
     # Save memory
-    with open(args.memory, 'w') as f:
-        json.dump(GPT_MEMORY, f)
+    if args.memory is not None:
+        with open(args.memory, 'w') as f:
+            json.dump(GPT_MEMORY, f)
