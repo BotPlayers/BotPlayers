@@ -1,4 +1,4 @@
-from .util import setup_pandafan_proxy, print_in_color, pprint_in_color
+from .util import setup_pandafan_proxy, print_in_color
 from .gpt_tools import gpt_callable, get_gpt_callable_function_descriptions, run_chat
 
 

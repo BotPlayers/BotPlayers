@@ -42,14 +42,3 @@ def print_in_color(text: str, color: str, end='\n'):
         color: The color to be used.
     """
     print(colorize_text_in_terminal(text, color), end=end)
-
-
-def pprint_in_color(obj: object, color: str):
-    """Pretty print an object in color.
-
-    Args:
-        obj: The object to be printed.
-        color: The color to be used.
-    """
-    from pprint import pprint
-    pprint(colorize_text_in_terminal(obj, color))
