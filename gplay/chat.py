@@ -31,7 +31,7 @@ def run_python_code(code: str):
     code_lines = [line for line in code_lines if len(line.strip()) > 0]
     if len(code_lines) == 0:
         return {'error': 'No code to run.'}
-    exec('\n'.join(code_lines[:-1]))
+    exec('\n'.join(code_lines[:-1]), globals())
     return {'result': eval(code_lines[-1])}
 
 
