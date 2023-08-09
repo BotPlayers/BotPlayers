@@ -1,19 +1,5 @@
-from .util import setup_pandafan_proxy, print_in_color
-from .gpt_tools import gpt_callable, run_chat
-
-
-@gpt_callable
-def calculator(expression: str):
-    """Calculate the result of a given expression.
-    Note that only Python expressions are supported.
-
-    Args:
-        expression: The expression to be calculated.
-
-    Returns:
-        result: the result of the calculation.
-    """
-    return {'result': eval(expression)}
+from .util import setup_pandafan_proxy, print_in_color, pprint_in_color
+from .gpt_tools import gpt_callable, get_gpt_callable_function_descriptions, run_chat
 
 
 @gpt_callable
@@ -32,6 +18,7 @@ def get_current_datetime():
 @gpt_callable
 def run_python_code(code: str):
     """Run a given Python code. 
+    Yes! You can run any Python code here to accomplish anything you want!
     Return the value of the last expression.
 
     Args:
@@ -41,10 +28,22 @@ def run_python_code(code: str):
         result: the value of the last expression.
     """
     code_lines = code.split('\n')
+    code_lines = [line for line in code_lines if len(line.strip()) > 0]
     if len(code_lines) == 0:
         return {'error': 'No code to run.'}
     exec('\n'.join(code_lines[:-1]))
     return {'result': eval(code_lines[-1])}
+
+
+@gpt_callable
+def list_files():
+    """List all files in the current directory.
+
+    Returns:
+        files: the list of files.
+    """
+    import os
+    return {'files': os.listdir('.')}
 
 
 if __name__ == '__main__':
@@ -65,4 +64,9 @@ if __name__ == '__main__':
     os.chdir(args.workspace)
     print_in_color(f'Working directory: {os.getcwd()}', 'blue')
 
-    run_chat(args.engine, args.t)
+    print_in_color(get_gpt_callable_function_descriptions(), 'green')
+
+    run_chat(args.engine, args.t,
+             system_message=('You are the Python chatbot! '
+                             'You can run any Python code using run_python_code '
+                             'to accomplish anything the user wants!'))

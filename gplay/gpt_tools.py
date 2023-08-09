@@ -78,8 +78,12 @@ def gpt_callable(function: callable):
     # Get function description from function doc string
     if 'Args:' in doc:
         function_description = doc.split('Args:')[0].strip()
+    elif 'Returns:' in doc:
+        function_description = doc.split('Returns:')[0].strip()
     else:
         function_description = doc.strip()
+    function_description = '\n'.join(
+        [line.strip() for line in function_description.split('\n') if len(line.strip()) > 0])
 
     # Register the function
     GPT_CALLABLE_FUNCTION_DESCRIPTIONS.append({
@@ -171,11 +175,13 @@ def call_gpt_function(function_call: dict):
         return {'error': str(e)}
 
 
-def run_chat(engine: str, t: float = 1.0):
+DEFAULT_SYSTEM_MESSAGE = ("You are a helpful assistant. When calling functions, "
+                          "only use the functions you have been provided with.")
+
+
+def run_chat(engine: str, t: float = 1.0, system_message: str = DEFAULT_SYSTEM_MESSAGE):
     messages = [
-        {"role": "system",
-         "content": ("You are a helpful assistant. When calling functions, "
-                     "only use the functions you have been provided with.")},
+        {"role": "system",  "content": system_message},
     ]
     while True:
         user_content = input(colorize_text_in_terminal("> ", "yellow"))
@@ -204,7 +210,7 @@ def run_chat(engine: str, t: float = 1.0):
                     {
                         "role": "function",
                         "name": new_message["function_call"]["name"],
-                        "content": json.dumps(function_response),
+                        "content": json.dumps(function_response, default=str),
                     }
                 )  # extend conversation with function response
             else:
