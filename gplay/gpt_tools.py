@@ -3,6 +3,8 @@ import re
 import json
 import openai
 
+from .util import colorize_text_in_terminal, print_in_color
+
 GPT_CALLABLE_FUNCTION_DESCRIPTIONS = []
 GPT_CALLABLE_FUNCTION_TABLE = dict()
 
@@ -109,10 +111,6 @@ def stream_chat_completion(engine: str, messages: list, temperature: float,
             delta = c['delta']
             if 'role' in delta:
                 role = delta['role']
-                print(f'[{delta["role"]}]')
-
-            if content == '' and 'content' in delta and delta['content'] == '\n\n':
-                continue
 
             if 'function_call' in delta:
                 for key, val in delta['function_call'].items():
@@ -125,14 +123,15 @@ def stream_chat_completion(engine: str, messages: list, temperature: float,
                 if len(content) == 0 and delta['content'] == '\n\n' or delta['content'] is None:
                     continue
                 content += delta['content']
-                print(delta['content'], end='')
+                print_in_color(delta['content'], 'green', end='')
 
-    print()
+    if len(content) > 0:
+        print()
+
     message = dict()
     message['role'] = role
     message['content'] = content
     if len(function_call) > 0:
-        print(f'function_call: {function_call}')
         message['function_call'] = function_call
     return message
 
@@ -146,7 +145,7 @@ def call_gpt_function(function_call: dict):
         return {'error': f'"{function_name}" is not a callable function.'}
 
     try:
-        print(f'[system]\nCalling function {function_name} ...')
+        print_in_color(f'    Calling function {function_name} ...', 'red')
         function_to_call: callable = get_gpt_callable_function(
             function_name)
 
@@ -156,9 +155,9 @@ def call_gpt_function(function_call: dict):
         else:
             function_args: dict = json.loads(function_args)
 
-        print(f'    with arguments {function_args}')
+        print_in_color(f'        with arguments {function_args}', 'red')
         function_response = function_to_call(**function_args)
-        print(f'    response: {function_response}')
+        print_in_color(f'        response: {function_response}', 'red')
 
         return function_response
     except Exception as e:
@@ -172,7 +171,7 @@ def run_chat(engine: str, t: float = 1.0):
                      "only use the functions you have been provided with.")},
     ]
     while True:
-        user_content = input("[user]\n> ")
+        user_content = input(colorize_text_in_terminal("> ", "yellow"))
         if user_content == 'q':
             break
         messages.append({"role": "user", "content": user_content})

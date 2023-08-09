@@ -1,0 +1,4 @@
+pgvector
+openai
+psycopg2-binary
+tiktoken
