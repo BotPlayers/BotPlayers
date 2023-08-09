@@ -1,10 +1,9 @@
 import os
 import json
-import openai
 
-from .util import (
-    gpt_callable, get_gpt_callable_function_descriptions, get_gpt_callable_function,
-    setup_pandafan_proxy)
+
+from .util import setup_pandafan_proxy
+from .gpt_tools import gpt_callable, run_chat
 
 
 @gpt_callable
@@ -75,104 +74,6 @@ def list_keys_in_memory():
     """
     global GPT_MEMORY
     return {'keys': list(GPT_MEMORY.keys())}
-
-
-def stream_chat_completion(engine: str, messages: list, temperature: float,
-                           **kwargs):
-    resp = openai.ChatCompletion.create(
-        model=engine,
-        messages=messages, temperature=temperature,
-        stream=True,
-        **kwargs
-    )
-    role = ''
-    content = ''
-    function_call = dict()
-    for chunk in resp:
-        for c in chunk['choices']:
-            delta = c['delta']
-            if 'role' in delta:
-                role = delta['role']
-                print(f'[{delta["role"]}]: ', end='')
-
-            if content == '' and 'content' in delta and delta['content'] == '\n\n':
-                continue
-
-            if 'function_call' in delta:
-                for key, val in delta['function_call'].items():
-                    if key not in function_call:
-                        function_call[key] = val
-                    else:
-                        function_call[key] += val
-
-            if 'content' in delta:
-                if len(content) == 0 and delta['content'] == '\n\n' or delta['content'] is None:
-                    continue
-                content += delta['content']
-                print(delta['content'], end='')
-
-    print()
-    message = dict()
-    message['role'] = role
-    message['content'] = content
-    if len(function_call) > 0:
-        print(f'function_call: {function_call}')
-        message['function_call'] = function_call
-    return message
-
-
-def run_chat(engine: str, t: float = 1.0):
-    messages = [
-        {"role": "system",
-         "content": ("You are a helpful assistant. When calling functions, "
-                     "only use the functions you have been provided with.")},
-    ]
-    while True:
-        user_content = input("[user]: ")
-        if user_content == 'q':
-            break
-        messages.append({"role": "user", "content": user_content})
-
-        while True:
-            new_message = stream_chat_completion(
-                engine=engine,
-                messages=messages,
-                temperature=t,
-                functions=get_gpt_callable_function_descriptions(),
-                function_call="auto",  # auto is default, but we'll be explicit
-            )
-
-            # Check if GPT wanted to call a function
-            if new_message.get("function_call"):
-                # Call the function
-                # Note: the JSON response may not always be valid; be sure to handle errors
-                function_name = new_message["function_call"]["name"]
-                print(f'[system]: Calling function {function_name} ...')
-
-                function_to_call: callable = get_gpt_callable_function(
-                    function_name)
-                function_args = new_message["function_call"]["arguments"]
-                if function_args is None:
-                    function_args = dict()
-                else:
-                    function_args: dict = json.loads(function_args)
-
-                print(f'[system]:     with arguments {function_args}')
-                function_response = function_to_call(**function_args)
-                print(f'[system]: Function response: {function_response}')
-
-                # Send the info on the function call and function response to GPT
-                messages.append(new_message)
-                messages.append(
-                    {
-                        "role": "function",
-                        "name": function_name,
-                        "content": json.dumps(function_response),
-                    }
-                )  # extend conversation with function response
-            else:
-                messages.append(new_message)
-                break
 
 
 if __name__ == '__main__':
