@@ -75,10 +75,16 @@ def gpt_callable(function: callable):
         if match:
             parameter_descriptions[name] = match.group(1).strip()
 
+    # Get function description from function doc string
+    if 'Args:' in doc:
+        function_description = doc.split('Args:')[0].strip()
+    else:
+        function_description = doc.strip()
+
     # Register the function
     GPT_CALLABLE_FUNCTION_DESCRIPTIONS.append({
         'name': function.__name__,
-        'description': function.__doc__.split('\n\n')[0],
+        'description': function_description,
         'parameters': {
             'type': 'object',
             'properties': {
@@ -123,7 +129,7 @@ def stream_chat_completion(engine: str, messages: list, temperature: float,
                 if len(content) == 0 and delta['content'] == '\n\n' or delta['content'] is None:
                     continue
                 content += delta['content']
-                print_in_color(delta['content'], 'green', end='')
+                print_in_color(delta['content'], 'yellow', end='')
 
     if len(content) > 0:
         print()
@@ -145,7 +151,7 @@ def call_gpt_function(function_call: dict):
         return {'error': f'"{function_name}" is not a callable function.'}
 
     try:
-        print_in_color(f'    Calling function {function_name} ...', 'red')
+        print_in_color(f'    Calling function {function_name} ...', 'blue')
         function_to_call: callable = get_gpt_callable_function(
             function_name)
 
@@ -155,12 +161,13 @@ def call_gpt_function(function_call: dict):
         else:
             function_args: dict = json.loads(function_args)
 
-        print_in_color(f'        with arguments {function_args}', 'red')
+        print_in_color(f'        with arguments {function_args}', 'blue')
         function_response = function_to_call(**function_args)
-        print_in_color(f'        response: {function_response}', 'red')
+        print_in_color(f'        response: {function_response}', 'blue')
 
         return function_response
     except Exception as e:
+        print_in_color(f'        error: {e}', 'red')
         return {'error': str(e)}
 
 
