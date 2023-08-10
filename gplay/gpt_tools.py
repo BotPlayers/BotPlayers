@@ -179,7 +179,9 @@ DEFAULT_SYSTEM_MESSAGE = ("You are a helpful assistant. When calling functions, 
                           "only use the functions you have been provided with.")
 
 
-def run_chat(engine: str, t: float = 1.0, system_message: str = DEFAULT_SYSTEM_MESSAGE):
+def run_chat(engine: str, t: float = 1.0, 
+             system_message: str = DEFAULT_SYSTEM_MESSAGE,
+             ):
     messages = [
         {"role": "system",  "content": system_message},
     ]
@@ -216,3 +218,57 @@ def run_chat(engine: str, t: float = 1.0, system_message: str = DEFAULT_SYSTEM_M
             else:
                 messages.append(new_message)
                 break
+
+
+def run_chat_with_python_call(engine:str, t:float=1.0,
+                              system_message:str = DEFAULT_SYSTEM_MESSAGE,
+                              ):
+    messages = [
+        {"role": "system",  "content": system_message},
+    ]
+    while True:
+        user_content = input(colorize_text_in_terminal("> ", "yellow"))
+        if user_content == 'q':
+            break
+        messages.append({"role": "user", "content": user_content})
+
+        while True:
+            new_message = stream_chat_completion(
+                engine=engine,
+                messages=messages,
+                temperature=t,
+                stop=["\n```Python\n", "\n```python\n", "\n```py\n", "\n```Py\n"],
+            )
+
+            if new_message['content'].endswith("\n```"):
+                # Remove the trailing ``` from the message
+                new_message['content'] = new_message['content'][:-3]
+
+                # Remove the leading ``` from the message
+                new_message['content'] = new_message['content'][5:]
+
+                # Send the info on the function call and function response to GPT
+                messages.append(new_message)
+                messages.append(
+                    {
+                        "role": "python",
+                        "content": new_message['content'],
+                    }
+                )
+                break
+
+            # Check if GPT wanted to call a function
+            if new_message.get("function_call"):
+                # Call the function
+                function_response = call_gpt_function(
+                    new_message["function_call"])
+
+                # Send the info on the function call and function response to GPT
+                messages.append(new_message)
+                messages.append(
+                    {
+                        "role": "function",
+                        "name": new_message["function_call"]["name"],
+                        "content": json.dumps(function_response, default=str),
+                    }
+                )

@@ -27,8 +27,11 @@ def run_python_code(code: str):
     Returns:
         result: the value of the last expression.
     """
+    code = code.strip()
+
+    print_in_color(code, 'green')
+
     code_lines = code.split('\n')
-    code_lines = [line for line in code_lines if len(line.strip()) > 0]
     if len(code_lines) == 0:
         return {'error': 'No code to run.'}
     exec('\n'.join(code_lines[:-1]), globals())
