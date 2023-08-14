@@ -1,6 +1,7 @@
 import os
 import datetime
 import json
+import yaml
 from playwright.sync_api import sync_playwright
 
 from .util import setup_pandafan_proxy, print_in_color
@@ -10,6 +11,7 @@ from .gpt_tools import (
 
 
 MAX_VISIBLE_TOKENS = 300
+
 
 def trim_text(text: str, starting_idx: int, max_tokens: int):
     tokens = TOKEN_ENCODING.encode(text)
@@ -138,7 +140,10 @@ def browse_webpage(world: dict, url: str):
     page.goto(url)
     a11y_snapshot = page.accessibility.snapshot()
 
-    a11y_snapshot_txt = json.dumps(a11y_snapshot, indent=2)
+    # print_in_color(a11y_snapshot, 'green')
+    a11y_snapshot_txt = yaml.safe_dump(
+        a11y_snapshot, indent=2, allow_unicode=True)
+    # print_in_color(a11y_snapshot_txt, 'green')
 
     world['last_result'] = a11y_snapshot_txt
     world['last_result_starting_idx'] = 0
@@ -171,7 +176,8 @@ def click_on_webpage(world: dict, selector: str):
     page.click(selector)
     a11y_snapshot = page.accessibility.snapshot()
 
-    a11y_snapshot_txt = json.dumps(a11y_snapshot, indent=2)
+    a11y_snapshot_txt = yaml.safe_dump(
+        a11y_snapshot, indent=2, allow_unicode=True)
 
     world['last_result'] = a11y_snapshot_txt
     world['last_result_starting_idx'] = 0
@@ -205,7 +211,8 @@ def input_text_to_webpage(world: dict, selector: str, input_text: str):
     page.fill(selector, input_text)
     a11y_snapshot = page.accessibility.snapshot()
 
-    a11y_snapshot_txt = json.dumps(a11y_snapshot, indent=2)
+    a11y_snapshot_txt = yaml.safe_dump(
+        a11y_snapshot, indent=2, allow_unicode=True)
 
     world['last_result'] = a11y_snapshot_txt
     world['last_result_starting_idx'] = 0
@@ -235,7 +242,8 @@ def backward_webpage(world: dict):
     page.goBack()
     a11y_snapshot = page.accessibility.snapshot()
 
-    a11y_snapshot_txt = json.dumps(a11y_snapshot, indent=2)
+    a11y_snapshot_txt = yaml.safe_dump(
+        a11y_snapshot, indent=2, allow_unicode=True)
 
     world['last_result'] = a11y_snapshot_txt
     world['last_result_starting_idx'] = 0
