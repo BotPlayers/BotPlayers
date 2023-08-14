@@ -20,7 +20,7 @@ def get_current_datetime():
 
 @gpt_callable
 def list_files(world: dict):
-    """List all files in the current directory.
+    """List all files in the workspace directory.
 
     Returns:
         files: the list of files.
