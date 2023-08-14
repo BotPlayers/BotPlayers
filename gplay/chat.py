@@ -1,5 +1,8 @@
+import os
+import datetime
 from .util import setup_pandafan_proxy, print_in_color
-from .gpt_tools import gpt_callable, get_gpt_callable_function_descriptions, run_chat
+from .gpt_tools import (
+    gpt_callable, get_gpt_callable_function_descriptions, run_chat, run_jupyter_code)
 
 
 @gpt_callable
@@ -16,60 +19,66 @@ def get_current_datetime():
 
 
 @gpt_callable
-def run_python_code(code: str):
-    """Run a given Python code. 
-    Yes! You can run any Python code here to accomplish anything you want!
-    Return the value of the last expression.
-
-    Args:
-        code: The Python code to be run.
-
-    Returns:
-        result: the value of the last expression.
-    """
-    code = code.strip()
-
-    print_in_color(code, 'green')
-
-    code_lines = code.split('\n')
-    if len(code_lines) == 0:
-        return {'error': 'No code to run.'}
-    exec('\n'.join(code_lines[:-1]), globals())
-    return {'result': eval(code_lines[-1])}
-
-
-@gpt_callable
-def list_files():
+def list_files(world: dict):
     """List all files in the current directory.
 
     Returns:
         files: the list of files.
     """
     import os
-    return {'files': os.listdir('.')}
+    workspace = world['workspace']
+    return {'files': os.listdir(workspace)}
+
+
+@gpt_callable
+def run_python_code(world: dict, code: str):
+    """Run a given Python code. 
+    Yes! You can run any Python code here to accomplish anything you want!
+    Return the value of the last expression.
+
+    Note two things in your code, 
+    * Always use the global variable `WORKSPACE` (str) in your code to access your workspace directory.
+    * Always use the global variable `WORKSPACE` (str) in your code to save files.
+      e.g. open(os.path.join(WORKSPACE, 'my_file.txt'), 'w').write('hello world')
+
+    Args:
+        code: The Python code to be run. 
+
+    Returns:
+        result: the value of the last expression.
+    """
+
+    print_in_color(code, 'green')
+    workspace = world['workspace']
+    result = run_jupyter_code(code, globals={'WORKSPACE': workspace})
+    return {'result': result}
 
 
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--pandafan', action='store_true', default=False)
-    parser.add_argument('--t', type=float, default=1.0)
     parser.add_argument('--engine', type=str, default='gpt-4')
     parser.add_argument('--workspace', type=str, default='.workspace')
+    parser.add_argument('--prompt-path', type=str,
+                        default='prompts/default.txt')
+    parser.add_argument('--enable-code-interpreter-mode',
+                        action='store_true', default=False)
 
     args = parser.parse_args()
+    prompt = open(args.prompt_path, 'r').read()
+
+    prompt = prompt.format(
+        current_date=datetime.datetime.now().strftime('%Y-%m-%d'),
+        workspace=os.path.abspath(args.workspace))
 
     if args.pandafan:
         setup_pandafan_proxy()
 
-    import os
     os.makedirs(args.workspace, exist_ok=True)
-    os.chdir(args.workspace)
-    print_in_color(f'Working directory: {os.getcwd()}', 'blue')
 
     print_in_color(get_gpt_callable_function_descriptions(), 'green')
 
-    run_chat(args.engine, args.t,
-             system_message=('You are the Python chatbot! '
-                             'You can run any Python code using run_python_code '
-                             'to accomplish anything the user wants!'))
+    run_chat(args.engine, system_message=prompt,
+             enable_code_interpreter_mode=args.enable_code_interpreter_mode,
+             world_state={'workspace': args.workspace})

@@ -28,8 +28,18 @@ def colorize_text_in_terminal(text: str, color: str):
         return f'\033[95m{text}\033[0m'
     elif color == 'cyan':
         return f'\033[96m{text}\033[0m'
+    elif color == 'gray':
+        return f'\033[90m{text}\033[0m'
+    elif color == 'orange':
+        return f'\033[38;5;208m{text}\033[0m'
     elif color == 'white':
         return f'\033[97m{text}\033[0m'
+    elif color == 'bold':
+        return f'\033[1m{text}\033[0m'
+    elif color == 'underline':
+        return f'\033[4m{text}\033[0m'
+    elif color == 'invert':
+        return f'\033[7m{text}\033[0m'
     else:
         return text
 
