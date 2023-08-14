@@ -1,9 +1,28 @@
 import os
 import datetime
+import json
+from playwright.sync_api import sync_playwright
+
 from .util import setup_pandafan_proxy, print_in_color
 from .gpt_tools import (
     gpt_callable, get_gpt_callable_function_descriptions, run_chat, run_jupyter_code,
     TOKEN_ENCODING)
+
+
+def trim_text(text: str, starting_idx: int = 0, max_tokens: int = 200):
+    tokens = TOKEN_ENCODING.encode(text)
+    if len(tokens) > max_tokens:
+        text = TOKEN_ENCODING.decode(
+            tokens[starting_idx:starting_idx + max_tokens])
+        if starting_idx > 0:
+            text = '... ' + text
+        if starting_idx + max_tokens < len(tokens):
+            text = text + ' ...'
+            text = '[Showing {} to {} tokens from {} tokens in total, use show_more() to see more]\n{}'.format(
+                starting_idx, starting_idx + max_tokens, len(tokens), text)
+        else:
+            text = '[This is the end of the text]\n{}'.format(text)
+    return text
 
 
 @gpt_callable
@@ -56,12 +75,11 @@ def run_python_code(world: dict, code: str):
 
 
 @gpt_callable
-def view_text_file(world: dict, file_name: str, starting_ratio: float):
-    """View a text file in the workspace directory. 200 tokens at most.
+def view_text_file(world: dict, file_name: str):
+    """View a text file in the workspace directory.
 
     Args:
         file_name: the file name.
-        starting_ratio: the starting ratio of the file to view.
 
     Returns:
         text: the text in the file.
@@ -70,15 +88,61 @@ def view_text_file(world: dict, file_name: str, starting_ratio: float):
     workspace = world['workspace']
     file_path = os.path.join(workspace, file_name)
     text = open(file_path, 'r').read()
-    tokens = TOKEN_ENCODING.encode(text)
-    if len(tokens) > 200:
-        starting_idx = int(len(tokens) * starting_ratio)
-        text = TOKEN_ENCODING.decode(tokens[starting_idx:starting_idx + 200])
-        if starting_ratio > 0:
-            text = '... ' + text
-        if starting_idx + 200 < len(tokens):
-            text = text + ' ...'
-    return {'text': text, 'file_name': file_name, 'starting_ratio': starting_ratio}
+    world['last_result'] = text
+    world['last_result_starting_idx'] = 0
+    world['last_result_name'] = 'text'
+
+    trimmed_text = trim_text(
+        world['last_result'], world['last_result_starting_idx'])
+    return {'text': trimmed_text, 'file_name': file_name}
+
+
+@gpt_callable
+def browse_webpage(world: dict, url: str):
+    """Browse a webpage.
+
+    Args:
+        url: the url of the webpage.
+
+    Returns:
+        a11y_snapshot: the accessibility (a11y) snapshot of the current webpage.
+    """
+    if 'playwright' not in world:
+        world['playwright'] = sync_playwright().start()
+        # world['playwright'].start()
+    if 'browser' not in world:
+        world['browser'] = world['playwright'].chromium.launch()
+    if 'page' not in world:
+        world['page'] = world['browser'].new_page()
+
+    page = world['page']
+    page.goto(url)
+    a11y_snapshot = page.accessibility.snapshot()
+
+    a11y_snapshot_txt = json.dumps(a11y_snapshot, indent=2)
+
+    world['last_result'] = a11y_snapshot_txt
+    world['last_result_starting_idx'] = 0
+    world['last_result_name'] = 'a11y_snapshot'
+
+    trimmed_text = trim_text(
+        world['last_result'], world['last_result_starting_idx'])
+    # print_in_color(a11y_snapshot, 'green')
+
+    return {'a11y_snapshot': trimmed_text}
+
+
+@gpt_callable
+def show_more_last_result(world: dict):
+    """Show more content from last result.
+
+    Returns:
+        text: the text.
+    """
+    world['last_result_starting_idx'] += 200
+    trimmed_text = trim_text(
+        world['last_result'], world['last_result_starting_idx'])
+    return {world['last_result_name']: trimmed_text}
 
 
 if __name__ == '__main__':
