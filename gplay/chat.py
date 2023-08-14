@@ -9,7 +9,9 @@ from .gpt_tools import (
     TOKEN_ENCODING)
 
 
-def trim_text(text: str, starting_idx: int = 0, max_tokens: int = 200):
+MAX_VISIBLE_TOKENS = 300
+
+def trim_text(text: str, starting_idx: int, max_tokens: int):
     tokens = TOKEN_ENCODING.encode(text)
     if len(tokens) > max_tokens:
         text = TOKEN_ENCODING.decode(
@@ -23,6 +25,22 @@ def trim_text(text: str, starting_idx: int = 0, max_tokens: int = 200):
         else:
             text = '[This is the end of the text]\n{}'.format(text)
     return text
+
+
+@gpt_callable
+def show_more_last_result(world: dict):
+    """Show more content from last result.
+
+    Returns:
+        text: the text.
+    """
+    if 'last_result' not in world:
+        return {'error': 'No last result.'}
+    world['last_result_starting_idx'] += MAX_VISIBLE_TOKENS
+    trimmed_text = trim_text(
+        world['last_result'], world['last_result_starting_idx'],
+        MAX_VISIBLE_TOKENS)
+    return {world['last_result_name']: trimmed_text}
 
 
 @gpt_callable
@@ -93,7 +111,8 @@ def view_text_file(world: dict, file_name: str):
     world['last_result_name'] = 'text'
 
     trimmed_text = trim_text(
-        world['last_result'], world['last_result_starting_idx'])
+        world['last_result'], world['last_result_starting_idx'],
+        MAX_VISIBLE_TOKENS)
     return {'text': trimmed_text, 'file_name': file_name}
 
 
@@ -126,23 +145,106 @@ def browse_webpage(world: dict, url: str):
     world['last_result_name'] = 'a11y_snapshot'
 
     trimmed_text = trim_text(
-        world['last_result'], world['last_result_starting_idx'])
-    # print_in_color(a11y_snapshot, 'green')
-
+        world['last_result'], world['last_result_starting_idx'],
+        MAX_VISIBLE_TOKENS)
     return {'a11y_snapshot': trimmed_text}
 
 
 @gpt_callable
-def show_more_last_result(world: dict):
-    """Show more content from last result.
+def click_on_webpage(world: dict, selector: str):
+    """Click on a webpage element.
+
+    Args:
+        selector: the selector of the element to click.
 
     Returns:
-        text: the text.
+        a11y_snapshot: the accessibility (a11y) snapshot of the current webpage after clicking.
     """
-    world['last_result_starting_idx'] += 200
+    if 'playwright' not in world:
+        world['playwright'] = sync_playwright().start()
+    if 'browser' not in world:
+        world['browser'] = world['playwright'].chromium.launch()
+    if 'page' not in world:
+        world['page'] = world['browser'].new_page()
+
+    page = world['page']
+    page.click(selector)
+    a11y_snapshot = page.accessibility.snapshot()
+
+    a11y_snapshot_txt = json.dumps(a11y_snapshot, indent=2)
+
+    world['last_result'] = a11y_snapshot_txt
+    world['last_result_starting_idx'] = 0
+    world['last_result_name'] = 'a11y_snapshot'
+
     trimmed_text = trim_text(
-        world['last_result'], world['last_result_starting_idx'])
-    return {world['last_result_name']: trimmed_text}
+        world['last_result'], world['last_result_starting_idx'],
+        MAX_VISIBLE_TOKENS)
+    return {'a11y_snapshot': trimmed_text}
+
+
+@gpt_callable
+def input_text_to_webpage(world: dict, selector: str, input_text: str):
+    """Input text to a webpage element.
+
+    Args:
+        selector: the selector of the element to input text to.
+        input_text: the text to input.
+
+    Returns:
+        a11y_snapshot: the accessibility (a11y) snapshot of the current webpage after inputting text.
+    """
+    if 'playwright' not in world:
+        world['playwright'] = sync_playwright().start()
+    if 'browser' not in world:
+        world['browser'] = world['playwright'].chromium.launch()
+    if 'page' not in world:
+        world['page'] = world['browser'].new_page()
+
+    page = world['page']
+    page.fill(selector, input_text)
+    a11y_snapshot = page.accessibility.snapshot()
+
+    a11y_snapshot_txt = json.dumps(a11y_snapshot, indent=2)
+
+    world['last_result'] = a11y_snapshot_txt
+    world['last_result_starting_idx'] = 0
+    world['last_result_name'] = 'a11y_snapshot'
+
+    trimmed_text = trim_text(
+        world['last_result'], world['last_result_starting_idx'],
+        MAX_VISIBLE_TOKENS)
+    return {'a11y_snapshot': trimmed_text}
+
+
+@gpt_callable
+def backward_webpage(world: dict):
+    """Go backward in the browser history.
+
+    Returns:
+        a11y_snapshot: the accessibility (a11y) snapshot of the current webpage after going back.
+    """
+    if 'playwright' not in world:
+        world['playwright'] = sync_playwright().start()
+    if 'browser' not in world:
+        world['browser'] = world['playwright'].chromium.launch()
+    if 'page' not in world:
+        world['page'] = world['browser'].new_page()
+
+    page = world['page']
+    page.goBack()
+    a11y_snapshot = page.accessibility.snapshot()
+
+    a11y_snapshot_txt = json.dumps(a11y_snapshot, indent=2)
+
+    world['last_result'] = a11y_snapshot_txt
+    world['last_result_starting_idx'] = 0
+    world['last_result_name'] = 'a11y_snapshot'
+
+    trimmed_text = trim_text(
+        world['last_result'], world['last_result_starting_idx'],
+        MAX_VISIBLE_TOKENS)
+    return {'a11y_snapshot': trimmed_text}
 
 
 if __name__ == '__main__':
