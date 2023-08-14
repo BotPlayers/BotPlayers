@@ -2,7 +2,8 @@ import os
 import datetime
 from .util import setup_pandafan_proxy, print_in_color
 from .gpt_tools import (
-    gpt_callable, get_gpt_callable_function_descriptions, run_chat, run_jupyter_code)
+    gpt_callable, get_gpt_callable_function_descriptions, run_chat, run_jupyter_code,
+    TOKEN_ENCODING)
 
 
 @gpt_callable
@@ -52,6 +53,32 @@ def run_python_code(world: dict, code: str):
     workspace = world['workspace']
     result = run_jupyter_code(code, globals={'WORKSPACE': workspace})
     return {'result': result}
+
+
+@gpt_callable
+def view_text_file(world: dict, file_name: str, starting_ratio: float):
+    """View a text file in the workspace directory. 200 tokens at most.
+
+    Args:
+        file_name: the file name.
+        starting_ratio: the starting ratio of the file to view.
+
+    Returns:
+        text: the text in the file.
+    """
+    import os
+    workspace = world['workspace']
+    file_path = os.path.join(workspace, file_name)
+    text = open(file_path, 'r').read()
+    tokens = TOKEN_ENCODING.encode(text)
+    if len(tokens) > 200:
+        starting_idx = int(len(tokens) * starting_ratio)
+        text = TOKEN_ENCODING.decode(tokens[starting_idx:starting_idx + 200])
+        if starting_ratio > 0:
+            text = '... ' + text
+        if starting_idx + 200 < len(tokens):
+            text = text + ' ...'
+    return {'text': text, 'file_name': file_name, 'starting_ratio': starting_ratio}
 
 
 if __name__ == '__main__':

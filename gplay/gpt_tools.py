@@ -2,6 +2,7 @@ import inspect
 import re
 import json
 import openai
+import tiktoken
 
 from .util import print_in_color
 
@@ -9,6 +10,8 @@ WORLD_PARAM_NAME = 'world'
 
 GPT_CALLABLE_FUNCTION_DESCRIPTIONS = []
 GPT_CALLABLE_FUNCTION_TABLE = dict()
+
+TOKEN_ENCODING = tiktoken.encoding_for_model('gpt-3.5-turbo')
 
 
 def get_gpt_callable_function_descriptions():
