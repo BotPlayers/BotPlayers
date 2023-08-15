@@ -1,24 +1,9 @@
-from abc import abstractmethod
-from .util import read_prompt
-from .agent import Agent, agent_callable
-
-
-class World:
-    agents: dict[str, Agent] = dict()
-
-    def add_agent(self, name: str, prompt: str,
-                  role: str = 'agent',
-                  engine: str = 'gpt-3.5-turbo-16k'):
-        agent = Agent(name, prompt, role=role, engine=engine)
-        self.agents[name] = agent
-
-    @abstractmethod
-    def run(self):
-        raise NotImplementedError()
+from .world import World
+from ..agent import agent_callable
+from ..util import read_prompt
 
 
 class ChatRoom(World):
-
     @agent_callable()
     def get_person_names_in_this_room(self):
         """Get the names of all persons in this room.

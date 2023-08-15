@@ -163,3 +163,4 @@ cython_debug/
 memory.json
 .workspace/
 .DS_Store
+.legacy/

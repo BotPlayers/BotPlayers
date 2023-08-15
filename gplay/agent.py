@@ -104,8 +104,7 @@ class agent_callable:
         return function
 
 
-def stream_chat_completion(engine: str, messages: list,
-                           **kwargs):
+def stream_chat_completion(engine: str, messages: list, print_output: bool = True, **kwargs):
     resp = openai.ChatCompletion.create(
         model=engine,
         messages=messages,
@@ -132,10 +131,11 @@ def stream_chat_completion(engine: str, messages: list,
                 if len(content) == 0 and delta['content'] == '\n\n' or delta['content'] is None:
                     continue
                 content += delta['content']
-                # print_in_color(delta['content'], 'yellow', end='')
+                if print_output:
+                    print_in_color(delta['content'], 'yellow', end='')
 
-    # if len(content) > 0:
-    #     print()
+    if len(content) > 0 and print_output:
+        print()
 
     message = dict()
     message['role'] = role
@@ -157,13 +157,17 @@ class Agent:
     ignore_none_function_messages: bool = True
 
     def __init__(self, name: str, prompt: str,
-                 engine: str = 'gpt-3.5-turbo-16k', role: str = 'agent'):
+                 engine: str = 'gpt-3.5-turbo-16k', role: str = 'agent',
+                 function_call_repeats: int = 1,
+                 ignore_none_function_messages: bool = True):
         self.name = name
         self.engine = engine
         self.role = role
         self.memory = [
             {"role": "system",  "content": prompt},
         ]
+        self.function_call_repeats = function_call_repeats
+        self.ignore_none_function_messages = ignore_none_function_messages
         self.callable_functions = self._callable_function_descriptions()
 
     def _callable_function_descriptions(self):
@@ -189,7 +193,8 @@ class Agent:
             return {'error': f'"{function_name}" is not a callable function.'}
 
         try:
-            print_in_color(f'    {self.name} is calling function {function_name} ...', 'blue')
+            print_in_color(
+                f'    {self.name} is calling function {function_name} ...', 'blue')
             function_info = GPT_CALLABLE_FUNCTION_TABLE[function_name]
             function_to_call = function_info['function']
             has_world_param = function_info['has_world_param']
@@ -218,7 +223,8 @@ class Agent:
             return {'error': str(e)}
 
     def receive_message(self, message: dict):
-        print_in_color(f'{self.name} received a message: {message["content"]}', 'green')
+        print_in_color(
+            f'{self.name} received a message: {message["content"]}', 'green')
         self.memory.append(message)
 
     def think_and_act_in_world(self, world: Any):
@@ -228,6 +234,7 @@ class Agent:
                 new_message = stream_chat_completion(
                     engine=self.engine,
                     messages=self.memory,
+                    print_output=not self.ignore_none_function_messages,
                     functions=self.callable_functions,
                     function_call="auto",
                     **self.engine_args
@@ -236,6 +243,7 @@ class Agent:
                 new_message = stream_chat_completion(
                     engine=self.engine,
                     messages=self.memory,
+                    print_output=not self.ignore_none_function_messages,
                     **self.engine_args
                 )
 
