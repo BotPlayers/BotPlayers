@@ -26,6 +26,16 @@ Screenshot
 ![](./media/explorer_screenshot.png)
 
 
+# Roadmap
+
+- [x] ChatRoom
+- [x] Explorer
+- [ ] RPG Game
+- [ ] Coding Project
+
+Talk to me if you have any ideas!
+
+
 # Contact
 
 Please contact me via [email](mailto:yangh2007@gmail.com).
