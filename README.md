@@ -1,5 +1,5 @@
 # gpt-players
-Play with agents.
+Play with agents using as few code as possible.
 
 ## ChatRoom
 
@@ -9,10 +9,24 @@ Chat with multiple agents in a ChatRoom.
 python -m gplay.world.chatroom
 ```
 
+Screenshot
+
+![](./media/chatroom_screenshot.png)
+
 ## Explorer
 
-Robot exploring the Internet.
+Robot that can explore the Internet using a web explorer.
 
 ```bash
 python -m gplay.world.explorer
 ```
+
+Screenshot
+
+![](./media/explorer_screenshot.png)
+
+
+# Contact
+
+Please contact me via [email](mailto:yangh2007@gmail.com).
+My homepage: [https://haya.pro](https://haya.pro).
