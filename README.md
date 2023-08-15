@@ -1,12 +1,12 @@
-# gpt-players
-Play with agents using as few code as possible.
+# BotPlayers
+Play with agents using **as few code as possible**.
 
 ## ChatRoom
 
 Chat with multiple agents in a ChatRoom.
 
 ```bash
-python -m gplay.world.chatroom
+python -m botplayers.world.chatroom
 ```
 
 Screenshot
@@ -18,7 +18,7 @@ Screenshot
 Robot that can explore the Internet using a web explorer.
 
 ```bash
-python -m gplay.world.explorer
+python -m botplayers.world.explorer
 ```
 
 Screenshot

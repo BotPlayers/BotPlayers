@@ -11,7 +11,7 @@ from .util import print_in_color
 WORLD_PARAM_NAME = 'self'
 AGENT_NAME_PARAM_NAME = 'agent_name'
 
-GPT_CALLABLE_FUNCTION_TABLE = dict()
+CALLABLE_FUNCTION_TABLE = dict()
 
 TOKEN_ENCODING = tiktoken.encoding_for_model('gpt-3.5-turbo')
 
@@ -28,7 +28,7 @@ class agent_callable:
         self.role_name_filter = role_name_filter
 
     def __call__(self, function: callable):
-        global GPT_CALLABLE_FUNCTION_TABLE
+        global CALLABLE_FUNCTION_TABLE
 
         # Get the parameters of the function
         signature = inspect.signature(function)
@@ -94,7 +94,7 @@ class agent_callable:
                 'required': required_parameters,
             },
         }
-        GPT_CALLABLE_FUNCTION_TABLE[function.__name__] = {
+        CALLABLE_FUNCTION_TABLE[function.__name__] = {
             'sig': func_sig,
             'function': function,
             'has_world_param': has_world_param,
@@ -175,7 +175,7 @@ class Agent:
         Get the descriptions of all GPT callable functions.
         """
         ds = []
-        for _, function in GPT_CALLABLE_FUNCTION_TABLE.items():
+        for _, function in CALLABLE_FUNCTION_TABLE.items():
             role_name_filter = function['role_name_filter']
             # use regex to match role name filter
             if not re.match(role_name_filter, self.role):
@@ -183,19 +183,19 @@ class Agent:
             ds.append(function['sig'])
         return ds
 
-    def _call_gpt_function(self, function_call: dict, world: Any = None):
+    def _call_function(self, function_call: dict, world: Any = None):
         """
         Call a GPT function.
         """
         function_name = function_call["name"]
 
-        if function_name not in GPT_CALLABLE_FUNCTION_TABLE:
+        if function_name not in CALLABLE_FUNCTION_TABLE:
             return {'error': f'"{function_name}" is not a callable function.'}
 
         try:
             print_in_color(
                 f'    {self.name} is calling function {function_name} ...', 'blue')
-            function_info = GPT_CALLABLE_FUNCTION_TABLE[function_name]
+            function_info = CALLABLE_FUNCTION_TABLE[function_name]
             function_to_call = function_info['function']
             has_world_param = function_info['has_world_param']
             has_agent_name_param = function_info['has_agent_name_param']
@@ -248,7 +248,7 @@ class Agent:
                 )
 
             if new_message.get("function_call"):
-                function_response = self._call_gpt_function(
+                function_response = self._call_function(
                     new_message["function_call"], world=world)
                 if function_response is None:
                     function_response = 'done'
