@@ -6,6 +6,7 @@ Play with agents using **as few code as possible**.
 Chat with multiple agents in a ChatRoom.
 
 ```bash
+export OPENAI_API_KEY=YOUR_KEY
 python -m botplayers.world.chatroom
 ```
 
@@ -18,6 +19,7 @@ Screenshot
 Robot that can explore the Internet using a web explorer.
 
 ```bash
+export OPENAI_API_KEY=YOUR_KEY
 python -m botplayers.world.explorer
 ```
 
