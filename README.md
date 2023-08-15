@@ -1,8 +1,18 @@
 # gpt-players
-Play with GPT and more.
+Play with agents.
 
-## chat
+## ChatRoom
+
+Chat with multiple agents in a ChatRoom.
 
 ```bash
-python -m gplay.chat --engine gpt-4
+python -m gplay.world.chatroom
+```
+
+## Explorer
+
+Robot exploring the Internet.
+
+```bash
+python -m gplay.world.explorer
 ```
