@@ -74,3 +74,9 @@ def run_jupyter_code(script, globals=None, locals=None):
     else:
         # otherwise we just execute the entire code
         return exec(script, globals, locals)
+
+
+def read_prompt(prompt_file, **args):
+    with open(prompt_file, 'r') as f:
+        content = f.read()
+        return content.format(**args)

@@ -8,15 +8,15 @@ import tiktoken
 
 from .util import print_in_color
 
-WORLD_PARAM_NAME = 'world'
-AGENT_ID_PARAM_NAME = 'agent_id'
+WORLD_PARAM_NAME = 'self'
+AGENT_NAME_PARAM_NAME = 'agent_name'
 
 GPT_CALLABLE_FUNCTION_TABLE = dict()
 
 TOKEN_ENCODING = tiktoken.encoding_for_model('gpt-3.5-turbo')
 
 
-class gpt_callable:
+class agent_callable:
     """
     A decorator that registers a function as a callable for GPT to call.
 
@@ -34,10 +34,10 @@ class gpt_callable:
         signature = inspect.signature(function)
         parameters = signature.parameters
         has_world_param = WORLD_PARAM_NAME in parameters
-        has_agent_id_param = AGENT_ID_PARAM_NAME in parameters
+        has_agent_name_param = AGENT_NAME_PARAM_NAME in parameters
         parameters_clean = {
             name: parameter for name, parameter in parameters.items()
-            if name not in {WORLD_PARAM_NAME, AGENT_ID_PARAM_NAME}}
+            if name not in {WORLD_PARAM_NAME, AGENT_NAME_PARAM_NAME}}
 
         required_parameters = []
         for name, parameter in parameters_clean.items():
@@ -98,7 +98,7 @@ class gpt_callable:
             'sig': func_sig,
             'function': function,
             'has_world_param': has_world_param,
-            'has_agent_id_param': has_agent_id_param,
+            'has_agent_name_param': has_agent_name_param,
             'role_name_filter': self.role_name_filter,
         }
         return function
@@ -132,10 +132,10 @@ def stream_chat_completion(engine: str, messages: list,
                 if len(content) == 0 and delta['content'] == '\n\n' or delta['content'] is None:
                     continue
                 content += delta['content']
-                print_in_color(delta['content'], 'yellow', end='')
+                # print_in_color(delta['content'], 'yellow', end='')
 
-    if len(content) > 0:
-        print()
+    # if len(content) > 0:
+    #     print()
 
     message = dict()
     message['role'] = role
@@ -148,15 +148,17 @@ def stream_chat_completion(engine: str, messages: list,
 class Agent:
     """ An agent that can think and act.
     """
-    agent_id: int
-    role: str
-    memory: list[dict]
-    engine: str
-    engine_args: dict
+    name: str
+    role: str = 'agent'
+    memory: list[dict] = []
+    engine: str = 'gpt-3.5-turbo-16k'
+    engine_args: dict = dict(temperature=1.0)
+    function_call_repeats: int = 1
+    ignore_none_function_messages: bool = True
 
-    def __init__(self, agent_id: int, prompt: str,
+    def __init__(self, name: str, prompt: str,
                  engine: str = 'gpt-3.5-turbo-16k', role: str = 'agent'):
-        self.agent_id = agent_id
+        self.name = name
         self.engine = engine
         self.role = role
         self.memory = [
@@ -178,19 +180,20 @@ class Agent:
         return ds
 
     def _call_gpt_function(self, function_call: dict, world: Any = None):
-        # Call the function
-        # Note: the JSON response may not always be valid; be sure to handle errors
+        """
+        Call a GPT function.
+        """
         function_name = function_call["name"]
 
         if function_name not in GPT_CALLABLE_FUNCTION_TABLE:
             return {'error': f'"{function_name}" is not a callable function.'}
 
         try:
-            print_in_color(f'    Calling function {function_name} ...', 'blue')
+            print_in_color(f'    {self.name} is calling function {function_name} ...', 'blue')
             function_info = GPT_CALLABLE_FUNCTION_TABLE[function_name]
             function_to_call = function_info['function']
             has_world_param = function_info['has_world_param']
-            has_agent_id_param = function_info['has_agent_id_param']
+            has_agent_name_param = function_info['has_agent_name_param']
 
             function_args = function_call["arguments"]
             if function_args is None:
@@ -201,25 +204,32 @@ class Agent:
             print_in_color(f'        with arguments {function_args}', 'blue')
             if has_world_param:
                 function_args[WORLD_PARAM_NAME] = world
-            if has_agent_id_param:
-                function_args[AGENT_ID_PARAM_NAME] = self.agent_id
+            if has_agent_name_param:
+                function_args[AGENT_NAME_PARAM_NAME] = self.name
 
             function_response = function_to_call(**function_args)
-            print_in_color(f'        response: {function_response}', 'blue')
+            if function_response is None:
+                return None
 
+            print_in_color(f'        response: {function_response}', 'blue')
             return function_response
         except Exception as e:
             print_in_color(f'        error: {e}', 'red')
             return {'error': str(e)}
 
+    def receive_message(self, message: dict):
+        print_in_color(f'{self.name} received a message: {message["content"]}', 'green')
+        self.memory.append(message)
+
     def think_and_act_in_world(self, world: Any):
-        while True:
+        for _ in range(self.function_call_repeats):
+            print_in_color(f'{self.name} >> ', 'yellow')
             if self.callable_functions:
                 new_message = stream_chat_completion(
                     engine=self.engine,
                     messages=self.memory,
                     functions=self.callable_functions,
-                    function_call="auto",  # auto is default, but we'll be explicit
+                    function_call="auto",
                     **self.engine_args
                 )
             else:
@@ -229,11 +239,12 @@ class Agent:
                     **self.engine_args
                 )
 
-            self.memory.append(new_message)
-
             if new_message.get("function_call"):
                 function_response = self._call_gpt_function(
                     new_message["function_call"], world=world)
+                if function_response is None:
+                    function_response = 'done'
+                self.memory.append(new_message)
                 self.memory.append(
                     {
                         "role": "function",
@@ -242,17 +253,6 @@ class Agent:
                     }
                 )
             else:
+                if not self.ignore_none_function_messages:
+                    self.memory.append(new_message)
                 break
-
-
-class World:
-    agents: list[Agent] = []
-
-    def add_agent(self, prompt: str, role: str):
-        agent_id = len(self.agents)
-        agent = Agent(agent_id, prompt, role=role)
-        self.agents.append(agent)
-
-    @abstractmethod
-    def run(self):
-        raise NotImplementedError()
