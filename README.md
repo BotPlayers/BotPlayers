@@ -65,7 +65,8 @@ A possible output is
 ![](./media/demo_output.png)
 
 
-Besides just calling stateless functions, bots can also interact with a stateful and customized environment through functions! Check out this [tutorial](./tutorial.ipynb) for more details.
+Besides just calling stateless functions, bots can also interact with a **stateful and customized environment** easily through functions!
+Check out this [tutorial](./tutorial.ipynb) to see how to accomplish this in less than 100 lines.
 
 
 ## Demos
