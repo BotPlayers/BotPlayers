@@ -1,17 +1,17 @@
 # BotPlayers
-Play with agents using **as few code as possible**.
 
-## Install
+A simple yet effective framework for building up your own bots 🤖 that live in a world 🌏 you defined!
+
+## How to install?
 
 ```bash
-# git clone this repo
-cd BotPlayers
+git clone https://github.com/BotPlayers/BotPlayers && cd BotPlayers
 pip install -e .
 ```
 
-## Tutorial
+## How to use the framework?
 
-It is very easy to build up your project using BotPlayers! Check out the [tutorial](./tutorial.ipynb).
+It's very simple. Check out this [tutorial](./tutorial.ipynb) for a quick start.
 
 
 ## Demos
@@ -45,11 +45,19 @@ Screenshot
 
 # Roadmap
 
+Demos
+
 - [x] ChatRoom
 - [x] Explorer
 - [ ] Python Coding Master
 - [ ] RPG Game
 - [ ] Github Repo Manager
+
+LLMs
+
+- [x] OpenAI ChatCompletion Models
+- [ ] OpenAI Completion Models
+- [ ] FastChat Models
 
 Talk to me if you have any ideas!
 
