@@ -78,11 +78,7 @@ class ChatRoom(World):
 
             agents = list(self.agents.values())
             for agent in agents:
-                agent.think_and_act_in_world(self)
-
-
-
-
+                agent.think_and_act(self)
 
 
 if __name__ == '__main__':
@@ -90,22 +86,28 @@ if __name__ == '__main__':
     world.add_agent(
         'Alice', read_prompt('prompts/role.txt',
                              name='Alice', age='25', location='Kansas',
-                             more_info="You don't like Bob. But you like David. You want to talk to David. You are a straight girl.",
+                             more_info="You don't like Bob. But you like David. You want to talk to David.",
                              likes='Reading', dislikes='None'),
         role='person',
-        engine='gpt-3.5-turbo')
+        engine='gpt-3.5-turbo',
+        function_call_repeats=1,
+        ignore_none_function_messages=True)
     world.add_agent(
         'Bob', read_prompt('prompts/role.txt',
                            name='Bob', age='25', location='California',
-                           more_info="You like Alice. You want to talk to Alice. You are shy.",
+                           more_info="You like Alice. You want to talk to Alice.",
                            likes='Play games', dislikes='None'),
         role='person',
-        engine='gpt-3.5-turbo')
+        engine='gpt-3.5-turbo',
+        function_call_repeats=1,
+        ignore_none_function_messages=True)
     world.add_agent(
         'David', read_prompt('prompts/role.txt',
                              name='David', age='25', location='Los Angeles',
                              more_info="You don't like Alice. You are geeky.",
                              likes='Working', dislikes='None'),
         role='person',
-        engine='gpt-3.5-turbo')
+        engine='gpt-3.5-turbo',
+        function_call_repeats=1,
+        ignore_none_function_messages=True)
     world.run()

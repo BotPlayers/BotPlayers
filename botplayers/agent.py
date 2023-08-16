@@ -142,8 +142,20 @@ def stream_chat_completion(engine: str, messages: List[dict], print_output: bool
     return message
 
 
+DEFAULT_FUNCTION_CALL_REPEATS = 10
+DEFAULT_IGNORE_NONE_FUNCTION_MESSAGES = True
+
+
 class Agent:
     """ An agent that can think and act.
+
+    Args:
+        name (str): The name of the agent.
+        prompt (str): The prompt to start the agent with.
+        role (str, optional): The role of the agent. Defaults to 'agent'.
+        engine (str, optional): The GPT engine to use. Defaults to 'gpt-3.5-turbo-16k'.
+        function_call_repeats (int, optional): The number of times to repeat function calls in agent.think_and_act().
+        ignore_none_function_messages (bool, optional): Whether to ignore messages that does not involve function calling.
     """
     name: str
     role: str = 'agent'
@@ -155,8 +167,8 @@ class Agent:
 
     def __init__(self, name: str, prompt: str,
                  engine: str = 'gpt-3.5-turbo-16k', role: str = 'agent',
-                 function_call_repeats: int = 1,
-                 ignore_none_function_messages: bool = True):
+                 function_call_repeats: int = DEFAULT_FUNCTION_CALL_REPEATS,
+                 ignore_none_function_messages: bool = DEFAULT_IGNORE_NONE_FUNCTION_MESSAGES):
         self.name = name
         self.engine = engine
         self.role = role
@@ -165,7 +177,6 @@ class Agent:
         ]
         self.function_call_repeats = function_call_repeats
         self.ignore_none_function_messages = ignore_none_function_messages
-        self.callable_functions = self._callable_function_descriptions()
 
     def _callable_function_descriptions(self):
         """
@@ -224,15 +235,16 @@ class Agent:
             f'{self.name} received a message: {message["content"]}', 'green')
         self.memory.append(message)
 
-    def think_and_act_in_world(self, world: Any):
+    def think_and_act(self, world: Any = None):
         for _ in range(self.function_call_repeats):
             print_in_color(f'{self.name} >> ', 'yellow')
-            if self.callable_functions:
+            callable_functions = self._callable_function_descriptions()
+            if callable_functions:
                 new_message = stream_chat_completion(
                     engine=self.engine,
                     messages=self.memory,
                     print_output=not self.ignore_none_function_messages,
-                    functions=self.callable_functions,
+                    functions=callable_functions,
                     function_call="auto",
                     **self.engine_args
                 )
@@ -269,9 +281,29 @@ class World:
     def add_agent(self, name: str, prompt: str,
                   role: str = 'agent',
                   engine: str = 'gpt-3.5-turbo-16k',
-                  function_call_repeats: int = 1,
-                  ignore_none_function_messages: bool = True):
+                  function_call_repeats: int = DEFAULT_FUNCTION_CALL_REPEATS,
+                  ignore_none_function_messages: bool = DEFAULT_IGNORE_NONE_FUNCTION_MESSAGES):
+        """
+        Add an agent to the world.
+
+        Args:
+            name (str): The name of the agent.
+            prompt (str): The prompt to start the agent with.
+            role (str, optional): The role of the agent. Defaults to 'agent'.
+            engine (str, optional): The GPT engine to use. Defaults to 'gpt-3.5-turbo-16k'.
+            function_call_repeats (int, optional): The number of times to repeat function calls in agent.think_and_act().
+            ignore_none_function_messages (bool, optional): Whether to ignore messages that does not involve function calling.
+        """
         agent = Agent(name, prompt, role=role, engine=engine,
                       function_call_repeats=function_call_repeats,
                       ignore_none_function_messages=ignore_none_function_messages)
         self.agents[name] = agent
+
+    def add(self, agent: Agent):
+        """
+        Add an agent to the world.
+
+        Args:
+            agent (Agent): The agent to add.
+        """
+        self.agents[agent.name] = agent

@@ -110,7 +110,7 @@ class Explorer(World):
 
             agents = list(self.agents.values())
             for agent in agents:
-                agent.think_and_act_in_world(self)
+                agent.think_and_act(self)
 
 
 if __name__ == '__main__':
