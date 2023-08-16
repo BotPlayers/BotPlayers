@@ -1,6 +1,10 @@
-from .world import World
-from ..agent import agent_callable
-from ..util import read_prompt
+from botplayers import agent_callable, World
+
+
+def read_prompt(prompt_file, **args):
+    with open(prompt_file, 'r') as f:
+        content = f.read()
+        return content.format(**args)
 
 
 class ChatRoom(World):
@@ -75,6 +79,10 @@ class ChatRoom(World):
             agents = list(self.agents.values())
             for agent in agents:
                 agent.think_and_act_in_world(self)
+
+
+
+
 
 
 if __name__ == '__main__':

@@ -3,3 +3,8 @@ openai
 psycopg2-binary
 tiktoken
 playwright
+pillow
+matplotlib
+jsonlines
+pyyaml
+opencv-python

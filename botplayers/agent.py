@@ -1,10 +1,8 @@
-from abc import abstractmethod
-from typing import Any
+from typing import Any, List, Dict
 import inspect
 import re
 import json
 import openai
-import tiktoken
 
 from .util import print_in_color
 
@@ -13,15 +11,14 @@ AGENT_NAME_PARAM_NAME = 'agent_name'
 
 CALLABLE_FUNCTION_TABLE = dict()
 
-TOKEN_ENCODING = tiktoken.encoding_for_model('gpt-3.5-turbo')
-
 
 class agent_callable:
     """
-    A decorator that registers a function as a callable for GPT to call.
+    A decorator that registers a function as a callable for agent to call.
 
     Args:
-        role_name_filter: a regex string to filter the role name. Default to '.*'.
+        role_name_filter: a regex string to filter the role name of agent. 
+            Default to '.*'.
     """
 
     def __init__(self, role_name_filter: str = '.*'):
@@ -104,7 +101,7 @@ class agent_callable:
         return function
 
 
-def stream_chat_completion(engine: str, messages: list, print_output: bool = True, **kwargs):
+def stream_chat_completion(engine: str, messages: List[dict], print_output: bool = True, **kwargs):
     resp = openai.ChatCompletion.create(
         model=engine,
         messages=messages,
@@ -150,7 +147,7 @@ class Agent:
     """
     name: str
     role: str = 'agent'
-    memory: list[dict] = []
+    memory: List[dict] = []
     engine: str = 'gpt-3.5-turbo-16k'
     engine_args: dict = dict(temperature=1.0)
     function_call_repeats: int = 1
@@ -264,3 +261,17 @@ class Agent:
                 if not self.ignore_none_function_messages:
                     self.memory.append(new_message)
                 break
+
+
+class World:
+    agents: Dict[str, Agent] = dict()
+
+    def add_agent(self, name: str, prompt: str,
+                  role: str = 'agent',
+                  engine: str = 'gpt-3.5-turbo-16k',
+                  function_call_repeats: int = 1,
+                  ignore_none_function_messages: bool = True):
+        agent = Agent(name, prompt, role=role, engine=engine,
+                      function_call_repeats=function_call_repeats,
+                      ignore_none_function_messages=ignore_none_function_messages)
+        self.agents[name] = agent

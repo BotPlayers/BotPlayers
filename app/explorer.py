@@ -1,9 +1,11 @@
 import yaml
+import tiktoken
 from playwright.sync_api import sync_playwright
 
-from .world import World
-from ..agent import agent_callable, TOKEN_ENCODING
-from ..util import read_prompt, print_in_color
+from botplayers import World, agent_callable
+from botplayers.util import print_in_color
+
+TOKEN_ENCODING = tiktoken.encoding_for_model('gpt-3.5-turbo')
 
 
 class Explorer(World):

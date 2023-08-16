@@ -1,13 +1,21 @@
 # BotPlayers
 Play with agents using **as few code as possible**.
 
+## Install
+
+```bash
+# git clone this repo
+cd BotPlayers
+pip install -e .
+```
+
 ## ChatRoom
 
 Chat with multiple agents in a ChatRoom.
 
 ```bash
 export OPENAI_API_KEY=YOUR_KEY
-python -m botplayers.world.chatroom
+python -m app.chatroom
 ```
 
 Screenshot
@@ -20,7 +28,7 @@ Robot that can explore the Internet using a web explorer.
 
 ```bash
 export OPENAI_API_KEY=YOUR_KEY
-python -m botplayers.world.explorer
+python -m app.explorer
 ```
 
 Screenshot
@@ -32,8 +40,9 @@ Screenshot
 
 - [x] ChatRoom
 - [x] Explorer
+- [ ] Python Coding Master
 - [ ] RPG Game
-- [ ] Coding Project
+- [ ] Github Repo Manager
 
 Talk to me if you have any ideas!
 
