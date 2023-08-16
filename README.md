@@ -9,7 +9,14 @@ cd BotPlayers
 pip install -e .
 ```
 
-## ChatRoom
+## Tutorial
+
+It is very easy to build up your project using BotPlayers! Check out the [tutorial](./tutorial.ipynb).
+
+
+## Demos
+
+### ChatRoom
 
 Chat with multiple agents in a ChatRoom.
 
@@ -22,7 +29,7 @@ Screenshot
 
 ![](./media/chatroom_screenshot.png)
 
-## Explorer
+### Explorer
 
 Robot that can explore the Internet using a web explorer.
 
