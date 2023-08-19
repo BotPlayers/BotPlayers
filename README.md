@@ -21,10 +21,10 @@ from botplayers import agent_callable, Agent
 
 Then, define a function that can be called by agents.
 
-1. The function must be decorated with agent_callable.
+1. The function must be decorated with `agent_callable`.
 2. The function can have any number of arguments.
 3. The function can return any JSON-serializable object.
-4. **IMPORTANT** Tell agents how to call this function by writing a docstring.
+4. **(IMPORTANT)** Tell agents how to call this function by writing a docstring.
 
 ```python
 @agent_callable()
@@ -98,13 +98,31 @@ Screenshot
 ![](./media/explorer_screenshot.png)
 
 
+### CodeGPT
+
+A bot that can code in Python.
+
+```bash
+export OPENAI_API_KEY=YOUR_KEY
+python -m app.codegpt
+```
+
+Screenshot
+
+![](./media/codegpt_screenshot.png)
+
+Generated image:
+
+![](./media/striped_image.png)
+
+
 # Roadmap
 
 Demos
 
 - [x] ChatRoom
 - [x] Explorer
-- [ ] Python Coding Master
+- [x] Python Coding Master
 - [ ] RPG Game
 - [ ] Github Repo Manager
 
@@ -113,6 +131,12 @@ LLMs
 - [x] OpenAI ChatCompletion Models
 - [ ] OpenAI Completion Models
 - [ ] FastChat Models
+
+Features
+
+- [ ] Tree of Thoughts Structure
+- [ ] Vector Database Support
+
 
 Talk to me if you have any ideas!
 

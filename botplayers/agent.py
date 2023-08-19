@@ -1,4 +1,4 @@
-from typing import Any, List, Dict
+from typing import Any, List, Dict, Union
 import inspect
 import re
 import json
@@ -7,6 +7,7 @@ import openai
 from .util import print_in_color
 
 WORLD_PARAM_NAME = 'self'
+AGENT_PARAM_NAME = 'agent'
 AGENT_NAME_PARAM_NAME = 'agent_name'
 
 CALLABLE_FUNCTION_TABLE = dict()
@@ -31,10 +32,11 @@ class agent_callable:
         signature = inspect.signature(function)
         parameters = signature.parameters
         has_world_param = WORLD_PARAM_NAME in parameters
+        has_agent_param = AGENT_PARAM_NAME in parameters
         has_agent_name_param = AGENT_NAME_PARAM_NAME in parameters
         parameters_clean = {
             name: parameter for name, parameter in parameters.items()
-            if name not in {WORLD_PARAM_NAME, AGENT_NAME_PARAM_NAME}}
+            if name not in {WORLD_PARAM_NAME, AGENT_PARAM_NAME, AGENT_NAME_PARAM_NAME}}
 
         required_parameters = []
         for name, parameter in parameters_clean.items():
@@ -95,6 +97,7 @@ class agent_callable:
             'sig': func_sig,
             'function': function,
             'has_world_param': has_world_param,
+            'has_agent_param': has_agent_param,
             'has_agent_name_param': has_agent_name_param,
             'role_name_filter': self.role_name_filter,
         }
@@ -178,6 +181,12 @@ class Agent:
         self.function_call_repeats = function_call_repeats
         self.ignore_none_function_messages = ignore_none_function_messages
 
+    def print_memory(self):
+        """ Print the agent's memory. """
+        for idx, message in enumerate(self.memory):
+            print_in_color(
+                f'    [{idx}] {message["role"]}: {message["content"]}', 'green')
+
     def _callable_function_descriptions(self):
         """
         Get the descriptions of all GPT callable functions.
@@ -206,6 +215,7 @@ class Agent:
             function_info = CALLABLE_FUNCTION_TABLE[function_name]
             function_to_call = function_info['function']
             has_world_param = function_info['has_world_param']
+            has_agent_param = function_info['has_agent_param']
             has_agent_name_param = function_info['has_agent_name_param']
 
             function_args = function_call["arguments"]
@@ -217,6 +227,8 @@ class Agent:
             print_in_color(f'        with arguments {function_args}', 'blue')
             if has_world_param:
                 function_args[WORLD_PARAM_NAME] = world
+            if has_agent_param:
+                function_args[AGENT_PARAM_NAME] = self
             if has_agent_name_param:
                 function_args[AGENT_NAME_PARAM_NAME] = self.name
 
@@ -230,12 +242,60 @@ class Agent:
             print_in_color(f'        error: {e}', 'red')
             return {'error': str(e)}
 
-    def receive_message(self, message: dict):
-        print_in_color(
-            f'{self.name} received a message: {message["content"]}', 'green')
+    def receive_message(self, message: dict, print_output: bool = True):
+        """
+        Receive a message.
+
+        Args:
+            message (dict): The message to receive.
+            print_output (bool, optional): Whether to print out the message. Defaults to True.
+        """
+        if print_output:
+            print_in_color(
+                f'{self.name} received a message: {message["content"]}', 'green')
         self.memory.append(message)
 
+    def response_to_message(self, message: Union[dict, list], store_in_memory: bool = False,
+                            print_output: bool = True):
+        """
+        Respond to a message or multiple messages.
+
+        Args:
+            message (Union[dict, list]): The message or messages to respond to.
+            store_in_memory (bool, optional): Whether to store the message in memory. Defaults to False.
+            print_output (bool, optional): Whether to print out the message and the response. Defaults to True.
+
+        Returns:
+            dict: The response.
+        """
+        new_memory = self.memory.copy()
+        if isinstance(message, dict):
+            message = [message]
+        for m in message:
+            if print_output:
+                print_in_color(
+                    f'{self.name} is asked: {m["content"]}', 'green')
+            new_memory.append(m)
+        response = stream_chat_completion(
+            engine=self.engine,
+            messages=new_memory,
+            print_output=not self.ignore_none_function_messages,
+            **self.engine_args
+        )
+        if print_output:
+            print_in_color(f'{self.name} >> {response["content"]}', 'yellow')
+        if store_in_memory:
+            self.memory += message
+            self.memory.append(response)
+        return response
+
     def think_and_act(self, world: Any = None):
+        """
+        Think and act.
+
+        Args:
+            world (Any, optional): The world. Defaults to None.
+        """
         for _ in range(self.function_call_repeats):
             print_in_color(f'{self.name} >> ', 'yellow')
             callable_functions = self._callable_function_descriptions()
@@ -257,11 +317,11 @@ class Agent:
                 )
 
             if new_message.get("function_call"):
+                self.memory.append(new_message)
                 function_response = self._call_function(
                     new_message["function_call"], world=world)
                 if function_response is None:
                     function_response = 'done'
-                self.memory.append(new_message)
                 self.memory.append(
                     {
                         "role": "function",
