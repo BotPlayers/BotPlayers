@@ -48,8 +48,13 @@ You don't have to explicitly tell agents how to call functions.
 agent = Agent(
     name='Bot', 
     prompt="You are a helpful bot. You can use functions to accomplish tasks.",
-    # tell agents what object they can interact with (this can be a list of functions or InteractiveSpace objects)
+
+    # Tell agents what objects they can interact with. 
+    # This can be a list of either functions that are decorated by 
+    # `agent_callable` or InteractiveSpace objects that have 
+    # `agent_callable` member functions.
     interactive_objects=[calculator], 
+
     function_call_repeats=15, 
     ignore_none_function_messages=False)
 ```
@@ -136,7 +141,7 @@ LLMs
 
 Features
 
-- [ ] Tree of Thoughts Structure
+- [x] Tree of Thoughts Structure
 - [ ] Vector Database Support
 
 
