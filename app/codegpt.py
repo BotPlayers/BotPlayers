@@ -1,5 +1,5 @@
 import os
-from botplayers import agent_callable, Agent
+from botplayers import agent_callable, Agent, InteractiveSpace
 from botplayers.util import print_in_color
 
 
@@ -25,10 +25,10 @@ def run_jupyter_code(script, globals=None, locals=None):
         return exec(script, globals, locals)
 
 
-class Env:
+class Env(InteractiveSpace):
     workspace: str = '.workspace'
 
-    @agent_callable()
+    @agent_callable
     def run_code(self, python_code: str):
         """Run python code.
         Yes! You can run any Python code here to accomplish anything you want!
@@ -52,7 +52,7 @@ class Env:
         os.chdir(prevdir)
         return {'result': result}
 
-    @agent_callable()
+    @agent_callable
     def list_files(self):
         """List all files in the current directory.
 
@@ -65,22 +65,24 @@ class Env:
 
 if __name__ == '__main__':
     prompt = "You are CodeGPT. \n\n#Tools\n\n##Functions\n\nOnly call functions that you are provided with."
-    agent = Agent('CodeGPT', prompt=prompt,
-                  engine='gpt-4',
-                  function_call_repeats=10,
-                  ignore_none_function_messages=False)
 
     env = Env()
     os.makedirs(env.workspace, exist_ok=True)
+
+    agent = Agent('CodeGPT', prompt=prompt,
+                  engine='gpt-4',
+                  interactive_objects=[env],
+                  function_call_repeats=10,
+                  ignore_none_function_messages=False)
 
     while True:
         user_message = input('>> ')
         if user_message in {'exit', 'q', 'quit()', 'quit'}:
             break
         if user_message == '::mem':
-            agent.print_memory()
+            agent.print_full_memory()
             continue
         if user_message.strip() != '':
             agent.receive_message(
                 {'role': 'user', 'content': user_message})
-        agent.think_and_act(env)
+        agent.think_and_act()

@@ -27,7 +27,7 @@ Then, define a function that can be called by agents.
 4. **(IMPORTANT)** Tell agents how to call this function by writing a docstring.
 
 ```python
-@agent_callable()
+@agent_callable
 def calculator(python_math_expression: str):
     """
     A simple calculator that can do basic math operations.
@@ -48,7 +48,9 @@ You don't have to explicitly tell agents how to call functions.
 agent = Agent(
     name='Bot', 
     prompt="You are a helpful bot. You can use functions to accomplish tasks.",
-    function_call_repeats=10, 
+    # tell agents what object they can interact with (this can be a list of functions or InteractiveSpace objects)
+    interactive_objects=[calculator], 
+    function_call_repeats=15, 
     ignore_none_function_messages=False)
 ```
 
@@ -65,7 +67,7 @@ A possible output is
 ![](./media/demo_output.png)
 
 
-Besides just calling stateless functions, bots can also interact with a **stateful and customized environment** easily through functions!
+Besides just calling stateless functions, bots can also interact with a **stateful and customized environment** easily through `InteractiveSpace`!
 Check out this [tutorial](./tutorial.ipynb) to see how to accomplish this in less than 100 lines.
 
 

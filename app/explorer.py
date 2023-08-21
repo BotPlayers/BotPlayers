@@ -2,13 +2,13 @@ import yaml
 import tiktoken
 from playwright.sync_api import sync_playwright
 
-from botplayers import World, agent_callable
+from botplayers import Agent, InteractiveSpace, agent_callable
 from botplayers.util import print_in_color
 
 TOKEN_ENCODING = tiktoken.encoding_for_model('gpt-3.5-turbo')
 
 
-class Explorer(World):
+class Explorer(InteractiveSpace):
     playwright = None
     browser = None
     page = None
@@ -44,7 +44,7 @@ class Explorer(World):
         print_in_color(text, 'orange')
         return text
 
-    @agent_callable()
+    @agent_callable
     def browse_webpage(self, url: str):
         """Browse a webpage.
 
@@ -69,7 +69,7 @@ class Explorer(World):
         trimmed_text = self.last_result_visible_part()
         return {'a11y_snapshot': trimmed_text}
 
-    @agent_callable()
+    @agent_callable
     def backward_webpage(self):
         """Go back to the previous webpage.
 
@@ -91,32 +91,29 @@ class Explorer(World):
         trimmed_text = self.last_result_visible_part()
         return {'a11y_snapshot': trimmed_text}
 
-    @agent_callable()
+    @agent_callable
     def show_more(self):
         """Show more of the last result."""
         self.last_result_starting_idx += self.max_visible_tokens
         trimmed_text = self.last_result_visible_part()
         return {'a11y_snapshot': trimmed_text}
 
-    def run(self):
-        while True:
-            user_message = input('>> ')
-            if user_message in {'exit', 'q', 'quit()', 'quit'}:
-                break
-            if user_message.strip() != '':
-                for agent in self.agents.values():
-                    agent.receive_message(
-                        {'role': 'user', 'content': user_message})
-
-            agents = list(self.agents.values())
-            for agent in agents:
-                agent.think_and_act(self)
-
 
 if __name__ == '__main__':
     explorer = Explorer()
-    explorer.add_agent(
-        'bot', 'You are a bot. You can browse webpages and interact with them.',
-        function_call_repeats=10,
-        ignore_none_function_messages=False)
-    explorer.run()
+    agent = Agent('Bot', 'You are a bot. You can browse webpages and interact with them.',
+                  interactive_objects=[explorer],
+                  function_call_repeats=10,
+                  ignore_none_function_messages=False)
+
+    while True:
+        user_message = input('>> ')
+        if user_message in {'exit', 'q', 'quit()', 'quit'}:
+            break
+        if user_message == '::mem':
+            agent.print_full_memory()
+            continue
+        if user_message.strip() != '':
+            agent.receive_message(
+                {'role': 'user', 'content': user_message})
+        agent.think_and_act()

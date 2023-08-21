@@ -1,4 +1,4 @@
 __version__ = '0.0.1'
 
-from .agent import Agent, World, agent_callable
+from .agent import Agent, agent_callable, InteractiveSpace
 from . import util
