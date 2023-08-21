@@ -1,107 +1,128 @@
-from typing import Any, List, Dict, Union
+from typing import Any, List, Optional
 import inspect
 import re
 import json
 import openai
+from functools import lru_cache
 
 from .util import print_in_color
 
-WORLD_PARAM_NAME = 'self'
+SELF_PARAM_NAME = 'self'
 AGENT_PARAM_NAME = 'agent'
 AGENT_NAME_PARAM_NAME = 'agent_name'
 
-CALLABLE_FUNCTION_TABLE = dict()
+
+def agent_callable(function):
+    """ Decorator to mark a function as agent callable. """
+    function.__agent_callable__ = True
+    return function
 
 
-class agent_callable:
-    """
-    A decorator that registers a function as a callable for agent to call.
+class InteractiveSpace:
+    def get_callable_functions(self):
+        functions = []
+        for func in dir(self):
+            if func.startswith('__'):
+                continue
+            fun = getattr(self, func)
+            if not hasattr(fun, '__agent_callable__'):
+                continue
+            if fun.__agent_callable__:
+                functions.append(fun)
+        return functions
 
-    Args:
-        role_name_filter: a regex string to filter the role name of agent. 
-            Default to '.*'.
-    """
 
-    def __init__(self, role_name_filter: str = '.*'):
-        self.role_name_filter = role_name_filter
+@lru_cache()
+def _parse_agent_callable_function(function):
+    # Get the parameters of the function
+    signature = inspect.signature(function)
+    parameters = signature.parameters
+    has_agent_param = AGENT_PARAM_NAME in parameters
+    has_agent_name_param = AGENT_NAME_PARAM_NAME in parameters
+    parameters_clean = {
+        name: parameter for name, parameter in parameters.items()
+        if name not in {SELF_PARAM_NAME, AGENT_PARAM_NAME, AGENT_NAME_PARAM_NAME}}
 
-    def __call__(self, function: callable):
-        global CALLABLE_FUNCTION_TABLE
+    required_parameters = []
+    for name, parameter in parameters_clean.items():
+        if parameter.default is inspect.Parameter.empty:
+            required_parameters.append(name)
 
-        # Get the parameters of the function
-        signature = inspect.signature(function)
-        parameters = signature.parameters
-        has_world_param = WORLD_PARAM_NAME in parameters
-        has_agent_param = AGENT_PARAM_NAME in parameters
-        has_agent_name_param = AGENT_NAME_PARAM_NAME in parameters
-        parameters_clean = {
-            name: parameter for name, parameter in parameters.items()
-            if name not in {WORLD_PARAM_NAME, AGENT_PARAM_NAME, AGENT_NAME_PARAM_NAME}}
+    # Get the type of each parameter by parsing the signature
+    json_schema_types = dict()
+    type_annotation_to_json_schema_type = {
+        str: 'string',
+        int: 'integer',
+        float: 'number',
+        bool: 'boolean',
+    }
+    for name, parameter in parameters_clean.items():
+        if parameter.annotation is not inspect.Parameter.empty:
+            type_annotation = parameter.annotation
+            json_schema_types[name] = type_annotation_to_json_schema_type.get(
+                type_annotation, 'string')
 
-        required_parameters = []
-        for name, parameter in parameters_clean.items():
-            if parameter.default is inspect.Parameter.empty:
-                required_parameters.append(name)
+    # Get the description of each parameter by parsing the doc
+    doc = function.__doc__
+    if doc is None:
+        doc = ''
+    parameter_descriptions = {}
+    for name in parameters_clean:
+        pattern = rf'{name}:(.*)'
+        match = re.search(pattern, doc)
+        if match:
+            parameter_descriptions[name] = match.group(1).strip()
 
-        # Get the type of each parameter by parsing the signature
-        json_schema_types = dict()
-        type_annotation_to_json_schema_type = {
-            str: 'string',
-            int: 'integer',
-            float: 'number',
-            bool: 'boolean',
-        }
-        for name, parameter in parameters_clean.items():
-            if parameter.annotation is not inspect.Parameter.empty:
-                type_annotation = parameter.annotation
-                json_schema_types[name] = type_annotation_to_json_schema_type.get(
-                    type_annotation, 'string')
+    # Get function description from function doc string
+    if 'Args:' in doc:
+        function_description = doc.split('Args:')[0].strip()
+    elif 'Returns:' in doc:
+        function_description = doc.split('Returns:')[0].strip()
+    else:
+        function_description = doc.strip()
+    function_description = '\n'.join(
+        [line.strip() for line in function_description.split('\n') if len(line.strip()) > 0])
 
-        # Get the description of each parameter by parsing the doc
-        doc = function.__doc__
-        if doc is None:
-            doc = ''
-        parameter_descriptions = {}
-        for name in parameters_clean:
-            pattern = rf'{name}:(.*)'
-            match = re.search(pattern, doc)
-            if match:
-                parameter_descriptions[name] = match.group(1).strip()
-
-        # Get function description from function doc string
-        if 'Args:' in doc:
-            function_description = doc.split('Args:')[0].strip()
-        elif 'Returns:' in doc:
-            function_description = doc.split('Returns:')[0].strip()
-        else:
-            function_description = doc.strip()
-        function_description = '\n'.join(
-            [line.strip() for line in function_description.split('\n') if len(line.strip()) > 0])
-
-        # Register the function
-        func_sig = {
-            'name': function.__name__,
-            'description': function_description,
-            'parameters': {
-                'type': 'object',
-                'properties': {
-                    name: {
-                        'type': json_schema_types.get(name, 'string'),
-                        'description': parameter_descriptions.get(name, ''),
-                    } for name in parameters_clean
-                },
-                'required': required_parameters,
+    # Register the function
+    func_sig = {
+        'name': function.__name__,
+        'description': function_description,
+        'parameters': {
+            'type': 'object',
+            'properties': {
+                name: {
+                    'type': json_schema_types.get(name, 'string'),
+                    'description': parameter_descriptions.get(name, ''),
+                } for name in parameters_clean
             },
-        }
-        CALLABLE_FUNCTION_TABLE[function.__name__] = {
-            'sig': func_sig,
-            'function': function,
-            'has_world_param': has_world_param,
-            'has_agent_param': has_agent_param,
-            'has_agent_name_param': has_agent_name_param,
-            'role_name_filter': self.role_name_filter,
-        }
-        return function
+            'required': required_parameters,
+        },
+    }
+    func_info = {
+        'sig': func_sig,
+        'function': function,
+        'has_agent_param': has_agent_param,
+        'has_agent_name_param': has_agent_name_param,
+    }
+    return func_info
+
+
+def _parse_interactive_objects(interactive_objects: List[Any]):
+    """ Install interactive objects. """
+    function_info_table = {}
+    for obj in interactive_objects:
+        if isinstance(obj, InteractiveSpace):
+            functions = obj.get_callable_functions()
+        else:
+            assert hasattr(
+                obj, '__agent_callable__'), f'Object {obj} is not agent callable.'
+            assert obj.__agent_callable__, f'Object {obj} is not agent callable.'
+            functions = [obj]
+        for func in functions:
+            assert func.__name__ not in function_info_table, f'Function {func.__name__} already registered.'
+            function_info_table[func.__name__] = _parse_agent_callable_function(
+                func)
+    return function_info_table
 
 
 def stream_chat_completion(engine: str, messages: List[dict], print_output: bool = True, **kwargs):
@@ -155,31 +176,71 @@ class Agent:
     Args:
         name (str): The name of the agent.
         prompt (str): The prompt to start the agent with.
-        role (str, optional): The role of the agent. Defaults to 'agent'.
         engine (str, optional): The GPT engine to use. Defaults to 'gpt-3.5-turbo-16k'.
+        interactive_objects (list, optional): A list of interactive objects to install. Defaults to [].
         function_call_repeats (int, optional): The number of times to repeat function calls in agent.think_and_act().
         ignore_none_function_messages (bool, optional): Whether to ignore messages that does not involve function calling.
     """
-    name: str
-    role: str = 'agent'
+    name: str = ''
     memory: List[dict] = []
     engine: str = 'gpt-3.5-turbo-16k'
     engine_args: dict = dict(temperature=1.0)
+    interactive_objects: list = []
+    callable_functions: dict = dict()
     function_call_repeats: int = 1
     ignore_none_function_messages: bool = True
 
-    def __init__(self, name: str, prompt: str,
-                 engine: str = 'gpt-3.5-turbo-16k', role: str = 'agent',
+    derived_from: Optional['Agent'] = None
+
+    def __init__(self, name: str, prompt: Optional[str] = None,
+                 engine: str = 'gpt-3.5-turbo-16k',
+                 interactive_objects: list = [],
                  function_call_repeats: int = DEFAULT_FUNCTION_CALL_REPEATS,
-                 ignore_none_function_messages: bool = DEFAULT_IGNORE_NONE_FUNCTION_MESSAGES):
+                 ignore_none_function_messages: bool = DEFAULT_IGNORE_NONE_FUNCTION_MESSAGES,
+                 derived_from: Optional['Agent'] = None):
         self.name = name
         self.engine = engine
-        self.role = role
-        self.memory = [
-            {"role": "system",  "content": prompt},
-        ]
+
+        if prompt is not None:
+            self.memory = [
+                {"role": "system",  "content": prompt},
+            ]
+
+        self.interactive_objects = interactive_objects
+        self.callable_functions = _parse_interactive_objects(
+            interactive_objects)
+
         self.function_call_repeats = function_call_repeats
         self.ignore_none_function_messages = ignore_none_function_messages
+        self.derived_from = derived_from
+
+    def derive_avatar(self, interactive_objects: Optional[list] = None,
+                      function_call_repeats: Optional[int] = None,
+                      ignore_none_function_messages: Optional[bool] = None):
+        """
+        Derive an avatar from the agent. 
+        The avatar will inherit the agent's memory.
+        But the history of the avatar will not be recorded in the agent's memory.
+
+        Args:
+            interactive_objects (list, optional): A list of interactive objects to install. Defaults to None.
+            function_call_repeats (int, optional): The number of times to repeat function calls in agent.think_and_act(). Defaults to None.
+            ignore_none_function_messages (bool, optional): Whether to ignore messages that does not involve function calling. Defaults to None.
+        """
+        if interactive_objects is None:
+            interactive_objects = self.interactive_objects
+        if function_call_repeats is None:
+            function_call_repeats = self.function_call_repeats
+        if ignore_none_function_messages is None:
+            ignore_none_function_messages = self.ignore_none_function_messages
+        return Agent(
+            name=self.name,
+            engine=self.engine,
+            interactive_objects=interactive_objects,
+            function_call_repeats=function_call_repeats,
+            ignore_none_function_messages=ignore_none_function_messages,
+            derived_from=self,
+        )
 
     def print_memory(self):
         """ Print the agent's memory. """
@@ -187,34 +248,48 @@ class Agent:
             print_in_color(
                 f'    [{idx}] {message["role"]}: {message["content"]}', 'green')
 
+    def full_memory(self):
+        if self.derived_from is None:
+            return self.memory
+        else:
+            return self.derived_from.full_memory() + self.memory
+
+    def print_full_memory(self):
+        """ Print the agent's memory. """
+        for idx, message in enumerate(self.full_memory()):
+            print_in_color(
+                f'    [{idx}] {message["role"]}: {message["content"]}', 'green')
+
+    def add_interactive_object(self, interactive_object):
+        """ Add an interactive object to the agent. """
+        self.interactive_objects.append(interactive_object)
+        self.callable_functions = _parse_interactive_objects(
+            self.interactive_objects)
+        return self
+
     def _callable_function_descriptions(self):
         """
         Get the descriptions of all GPT callable functions.
         """
         ds = []
-        for _, function in CALLABLE_FUNCTION_TABLE.items():
-            role_name_filter = function['role_name_filter']
-            # use regex to match role name filter
-            if not re.match(role_name_filter, self.role):
-                continue
+        for _, function in self.callable_functions.items():
             ds.append(function['sig'])
         return ds
 
-    def _call_function(self, function_call: dict, world: Any = None):
+    def _call_function(self, function_call: dict):
         """
         Call a GPT function.
         """
         function_name = function_call["name"]
 
-        if function_name not in CALLABLE_FUNCTION_TABLE:
+        if function_name not in self.callable_functions:
             return {'error': f'"{function_name}" is not a callable function.'}
 
         try:
             print_in_color(
                 f'    {self.name} is calling function {function_name} ...', 'blue')
-            function_info = CALLABLE_FUNCTION_TABLE[function_name]
+            function_info = self.callable_functions[function_name]
             function_to_call = function_info['function']
-            has_world_param = function_info['has_world_param']
             has_agent_param = function_info['has_agent_param']
             has_agent_name_param = function_info['has_agent_name_param']
 
@@ -225,8 +300,6 @@ class Agent:
                 function_args: dict = json.loads(function_args)
 
             print_in_color(f'        with arguments {function_args}', 'blue')
-            if has_world_param:
-                function_args[WORLD_PARAM_NAME] = world
             if has_agent_param:
                 function_args[AGENT_PARAM_NAME] = self
             if has_agent_name_param:
@@ -254,47 +327,11 @@ class Agent:
             print_in_color(
                 f'{self.name} received a message: {message["content"]}', 'green')
         self.memory.append(message)
+        return self
 
-    def response_to_message(self, message: Union[dict, list], store_in_memory: bool = False,
-                            print_output: bool = True):
-        """
-        Respond to a message or multiple messages.
-
-        Args:
-            message (Union[dict, list]): The message or messages to respond to.
-            store_in_memory (bool, optional): Whether to store the message in memory. Defaults to False.
-            print_output (bool, optional): Whether to print out the message and the response. Defaults to True.
-
-        Returns:
-            dict: The response.
-        """
-        new_memory = self.memory.copy()
-        if isinstance(message, dict):
-            message = [message]
-        for m in message:
-            if print_output:
-                print_in_color(
-                    f'{self.name} is asked: {m["content"]}', 'green')
-            new_memory.append(m)
-        response = stream_chat_completion(
-            engine=self.engine,
-            messages=new_memory,
-            print_output=not self.ignore_none_function_messages,
-            **self.engine_args
-        )
-        if print_output:
-            print_in_color(f'{self.name} >> {response["content"]}', 'yellow')
-        if store_in_memory:
-            self.memory += message
-            self.memory.append(response)
-        return response
-
-    def think_and_act(self, world: Any = None):
+    def think_and_act(self):
         """
         Think and act.
-
-        Args:
-            world (Any, optional): The world. Defaults to None.
         """
         for _ in range(self.function_call_repeats):
             print_in_color(f'{self.name} >> ', 'yellow')
@@ -302,7 +339,7 @@ class Agent:
             if callable_functions:
                 new_message = stream_chat_completion(
                     engine=self.engine,
-                    messages=self.memory,
+                    messages=self.full_memory(),
                     print_output=not self.ignore_none_function_messages,
                     functions=callable_functions,
                     function_call="auto",
@@ -311,7 +348,7 @@ class Agent:
             else:
                 new_message = stream_chat_completion(
                     engine=self.engine,
-                    messages=self.memory,
+                    messages=self.full_memory(),
                     print_output=not self.ignore_none_function_messages,
                     **self.engine_args
                 )
@@ -319,7 +356,7 @@ class Agent:
             if new_message.get("function_call"):
                 self.memory.append(new_message)
                 function_response = self._call_function(
-                    new_message["function_call"], world=world)
+                    new_message["function_call"])
                 if function_response is None:
                     function_response = 'done'
                 self.memory.append(
@@ -333,37 +370,10 @@ class Agent:
                 if not self.ignore_none_function_messages:
                     self.memory.append(new_message)
                 break
+        return self
 
-
-class World:
-    agents: Dict[str, Agent] = dict()
-
-    def add_agent(self, name: str, prompt: str,
-                  role: str = 'agent',
-                  engine: str = 'gpt-3.5-turbo-16k',
-                  function_call_repeats: int = DEFAULT_FUNCTION_CALL_REPEATS,
-                  ignore_none_function_messages: bool = DEFAULT_IGNORE_NONE_FUNCTION_MESSAGES):
+    def last_message(self):
         """
-        Add an agent to the world.
-
-        Args:
-            name (str): The name of the agent.
-            prompt (str): The prompt to start the agent with.
-            role (str, optional): The role of the agent. Defaults to 'agent'.
-            engine (str, optional): The GPT engine to use. Defaults to 'gpt-3.5-turbo-16k'.
-            function_call_repeats (int, optional): The number of times to repeat function calls in agent.think_and_act().
-            ignore_none_function_messages (bool, optional): Whether to ignore messages that does not involve function calling.
+        Retreive the last message.
         """
-        agent = Agent(name, prompt, role=role, engine=engine,
-                      function_call_repeats=function_call_repeats,
-                      ignore_none_function_messages=ignore_none_function_messages)
-        self.agents[name] = agent
-
-    def add(self, agent: Agent):
-        """
-        Add an agent to the world.
-
-        Args:
-            agent (Agent): The agent to add.
-        """
-        self.agents[agent.name] = agent
+        return self.memory[-1]
