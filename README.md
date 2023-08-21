@@ -130,6 +130,7 @@ Demos
 - [x] ChatRoom
 - [x] Explorer
 - [x] Python Coding Master
+- [ ] Python Project Manager
 - [ ] RPG Game
 - [ ] Github Repo Manager
 
