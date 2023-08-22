@@ -1,3 +1,4 @@
+import os
 import yaml
 import tiktoken
 from playwright.sync_api import sync_playwright
@@ -43,6 +44,30 @@ class Explorer(InteractiveSpace):
                 text = '[This is the end of the text]\n{}'.format(text)
         print_in_color(text, 'orange')
         return text
+
+    @agent_callable
+    def search(self, text: str):
+        """
+        Search something on Google.
+
+        Args:
+            text: The text to be searched.
+        """
+        from serpapi import GoogleSearch
+        params = {
+            "api_key": os.environ['SERPAPI_API_KEY'],
+            "engine": "google",
+            "q": text,
+            "location": "Austin, Texas, United States",
+            "google_domain": "google.com",
+            "gl": "us",
+            "hl": "en",
+            "num": 1,
+        }
+        search = GoogleSearch(params)
+        results = search.get_json()
+        keys = {'title', 'link', 'snippet'}
+        return {key: value for key, value in results['organic_results'][0].items() if key in keys}
 
     @agent_callable
     def browse_webpage(self, url: str):

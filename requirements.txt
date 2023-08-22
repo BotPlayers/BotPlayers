@@ -8,3 +8,4 @@ matplotlib
 jsonlines
 pyyaml
 opencv-python
+google-search-results

@@ -178,6 +178,7 @@ class Agent:
         prompt (str): The prompt to start the agent with.
         engine (str, optional): The GPT engine to use. Defaults to 'gpt-3.5-turbo-16k'.
         interactive_objects (list, optional): A list of interactive objects to install. Defaults to [].
+            Each interactive object should be either an InteractiveSpace or an agent callable function (decorated by agent_callable).
         function_call_repeats (int, optional): The number of times to repeat function calls in agent.think_and_act().
         ignore_none_function_messages (bool, optional): Whether to ignore messages that does not involve function calling.
     """

@@ -9,7 +9,6 @@ def run_jupyter_code(script, globals=None, locals=None):
     stmts = list(ast.iter_child_nodes(ast.parse(script)))
     if not stmts:
         return None
-    # print(stmts[-1].__dict__)
     if isinstance(stmts[-1], ast.Expr):
         # the last one is an expression and we will try to return the results
         # so we first execute the previous statements
@@ -32,7 +31,7 @@ class Env(InteractiveSpace):
     def run_code(self, python_code: str):
         """Run python code.
         Yes! You can run any Python code here to accomplish anything you want!
-         Return the value of the last expression.
+        Return the value of the last expression.
 
         Args:
             python_code: the Python code to be run.

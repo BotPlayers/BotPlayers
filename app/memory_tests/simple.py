@@ -16,6 +16,8 @@ class Database(InteractiveSpace):
         'Alice likes David.'
     ]
 
+    num_confirms = 5
+
     @agent_callable
     def review_info(self, agent: Agent):
         """
@@ -31,21 +33,30 @@ class Database(InteractiveSpace):
                 info_show_to_agent = f"[info from database]: {info}\n" + \
                     "There are no more info in the dabase."
 
-            response = agent.derive_avatar(interactive_objects=[]).receive_message(
-                {'role': 'user', 'content': info_show_to_agent}
-            ).think_and_act().last_message()
+            results = [
+                agent.derive_avatar(interactive_objects=[]).receive_message(
+                    {'role': 'user', 'content': info_show_to_agent}
+                ).think_and_act().last_message()['content'].lower().startswith('y')
+                for _ in range(self.num_confirms)]
 
-            if response['content'].lower().startswith('y'):
+            if sum(results) >= self.num_confirms // 2 + 1:
                 useful_info.append(info)
 
                 if idx < len(self.info_list) - 1:
-                    response = agent.derive_avatar(interactive_objects=[]).receive_message(
-                        {'role': 'user', 'content':
-                         'Current info:\n' + to_markdown(useful_info) + '\n' +
-                         'Do you have sufficient infomation to answer the user\'s question? Answer yes or no.'}
-                    ).think_and_act().last_message()
-                    
-                    if response['content'].lower().startswith('y'):
+                    qs = [
+                        'Do you have sufficient infomation to answer the user\'s question? Answer yes or no.',
+                        'Do current info suffice to answer the user\'s question? Answer yes or no.',
+                        'Do you have enough info to answer the user\'s question? Answer yes or no.',
+                    ]
+                    results = [
+                        agent.derive_avatar(interactive_objects=[]).receive_message(
+                            {'role': 'user', 'content':
+                             'Current info:\n' + to_markdown(useful_info) + '\n' +
+                             qs[qidx % len(qs)]}
+                        ).think_and_act().last_message()['content'].lower().startswith('y')
+                        for qidx in range(self.num_confirms)]
+
+                    if sum(results) >= self.num_confirms // 2 + 1:
                         break
 
         return useful_info
@@ -66,7 +77,7 @@ while True:
     if user_message in {'exit', 'q', 'quit()', 'quit'}:
         break
     if user_message == '::mem':
-        agent.print_memory()
+        agent.print_full_memory()
         continue
     if user_message.strip() != '':
         agent.receive_message({'role': 'user', 'content': user_message})
