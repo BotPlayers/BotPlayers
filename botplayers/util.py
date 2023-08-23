@@ -46,4 +46,15 @@ def print_in_color(text: str, color: str, end='\n'):
     print(colorize_text_in_terminal(text, color), end=end)
 
 
+def parse_experience_data(data: dict):
+    """Parse experience data.
 
+    Args:
+        data: The data to be parsed.
+    """
+    template = data['template']
+    msgs = [{'role': 'system', 'content': data['system']}]
+    for item in data['items']:
+        for role, content in template.items():
+            msgs.append({'role': role, 'content': content.format(**item)})
+    return msgs

@@ -1,8 +1,52 @@
+import yaml
 from botplayers import agent_callable, Agent, InteractiveSpace
+from botplayers.util import parse_experience_data
 
 
-def to_markdown(list_data: list):
-    return '\n'.join([f'- {item}' for item in list_data])
+class IsUseful:
+    worker: Agent = Agent(
+        'Bot.IsUseful', engine='gpt-3.5-turbo',
+        function_call_repeats=1,
+        ignore_none_function_messages=False
+    ).receive_messages(
+        parse_experience_data(yaml.safe_load(
+            open('app/memory_tests/is_useful.yaml', 'r'))),
+        print_output=False
+    )
+
+    def __call__(self, user_question: str, current_info: str):
+        """
+        Judge whether the current info is useful to answer the user's question.
+        """
+        return self.worker.receive_message(
+            {'role': 'user', 'content':
+             'Question: ' + user_question + '\n' +
+             'Info: ' + current_info + '\n' +
+             'Is this info related to the question? Answer yes or no.'}
+        ).think_and_act().last_message()['content'].lower().startswith('y')
+
+
+class IsSufficient:
+    worker: Agent = Agent(
+        'Bot.IsSufficient', engine='gpt-3.5-turbo',
+        function_call_repeats=1,
+        ignore_none_function_messages=False
+    ).receive_messages(
+        parse_experience_data(yaml.safe_load(
+            open('app/memory_tests/is_sufficient.yaml', 'r'))),
+        print_output=False
+    )
+
+    def __call__(self, user_question: str, current_info: list):
+        """
+        Judge whether the current info is sufficient to answer the user's question.
+        """
+        return self.worker.receive_message(
+            {'role': 'user', 'content':
+             'Question: ' + user_question + '\n' +
+             'Info: ' + ' '.join(current_info) + '\n' +
+             'Are these info sufficient to answer the question? Answer yes or no.'}
+        ).think_and_act().last_message()['content'].lower().startswith('y')
 
 
 class Database(InteractiveSpace):
@@ -16,49 +60,24 @@ class Database(InteractiveSpace):
         'Alice likes David.'
     ]
 
-    num_confirms = 5
+    is_useful = IsUseful()
+    is_sufficient = IsSufficient()
 
     @agent_callable
-    def review_info(self, agent: Agent):
+    def find_info(self, user_question: str):
         """
-        View the information from the database.
-        You can call this function multiple times to find more useful information.
+        Find the information from the database that are useful to answer the user's question.
+
+        Args:
+            user_question: The user's full question.
         """
         useful_info = []
         for idx, info in enumerate(self.info_list):
-            if idx < len(self.info_list) - 1:
-                info_show_to_agent = f"[info from database]: {info}\n" + \
-                    "Is this info useful? Answer yes or no."
-            else:
-                info_show_to_agent = f"[info from database]: {info}\n" + \
-                    "There are no more info in the dabase."
-
-            results = [
-                agent.derive_avatar(interactive_objects=[]).receive_message(
-                    {'role': 'user', 'content': info_show_to_agent}
-                ).think_and_act().last_message()['content'].lower().startswith('y')
-                for _ in range(self.num_confirms)]
-
-            if sum(results) >= self.num_confirms // 2 + 1:
+            if self.is_useful(user_question, info):
                 useful_info.append(info)
-
                 if idx < len(self.info_list) - 1:
-                    qs = [
-                        'Do you have sufficient infomation to answer the user\'s question? Answer yes or no.',
-                        'Do current info suffice to answer the user\'s question? Answer yes or no.',
-                        'Do you have enough info to answer the user\'s question? Answer yes or no.',
-                    ]
-                    results = [
-                        agent.derive_avatar(interactive_objects=[]).receive_message(
-                            {'role': 'user', 'content':
-                             'Current info:\n' + to_markdown(useful_info) + '\n' +
-                             qs[qidx % len(qs)]}
-                        ).think_and_act().last_message()['content'].lower().startswith('y')
-                        for qidx in range(self.num_confirms)]
-
-                    if sum(results) >= self.num_confirms // 2 + 1:
+                    if self.is_sufficient(user_question, useful_info):
                         break
-
         return useful_info
 
 
@@ -67,7 +86,7 @@ info_database = Database()
 agent = Agent(
     'Bot', prompt=('You are a helpful bot. You can use functions to access the knowledge from a database. '
                    'Answer questions using only the knowledge from the database.'),
-    engine='gpt-4',
+    engine='gpt-3.5-turbo',
     interactive_objects=[info_database],
     function_call_repeats=1,
     ignore_none_function_messages=False)

@@ -1,7 +1,7 @@
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Union
 import inspect
-import re
 import json
+import re
 import openai
 from functools import lru_cache
 
@@ -175,7 +175,7 @@ class Agent:
 
     Args:
         name (str): The name of the agent.
-        prompt (str): The prompt to start the agent with.
+        prompt (Union[str, list], optional): The prompt to initialize the agent's memory. Defaults to None.
         engine (str, optional): The GPT engine to use. Defaults to 'gpt-3.5-turbo-16k'.
         interactive_objects (list, optional): A list of interactive objects to install. Defaults to [].
             Each interactive object should be either an InteractiveSpace or an agent callable function (decorated by agent_callable).
@@ -193,7 +193,8 @@ class Agent:
 
     derived_from: Optional['Agent'] = None
 
-    def __init__(self, name: str, prompt: Optional[str] = None,
+    def __init__(self, name: str,
+                 prompt: Optional[Union[str, list]] = None,
                  engine: str = 'gpt-3.5-turbo-16k',
                  interactive_objects: list = [],
                  function_call_repeats: int = DEFAULT_FUNCTION_CALL_REPEATS,
@@ -203,9 +204,12 @@ class Agent:
         self.engine = engine
 
         if prompt is not None:
-            self.memory = [
-                {"role": "system",  "content": prompt},
-            ]
+            if isinstance(prompt, str):
+                self.memory = [
+                    {"role": "system",  "content": prompt},
+                ]
+            elif isinstance(prompt, list):
+                self.memory = prompt
 
         self.interactive_objects = interactive_objects
         self.callable_functions = _parse_interactive_objects(
@@ -328,6 +332,18 @@ class Agent:
             print_in_color(
                 f'{self.name} received a message: {message["content"]}', 'green')
         self.memory.append(message)
+        return self
+
+    def receive_messages(self, messages: List[dict], print_output: bool = True):
+        """
+        Receive a list of messages.
+
+        Args:
+            messages (List[dict]): The messages to receive.
+            print_output (bool, optional): Whether to print out the messages. Defaults to True.
+        """
+        for message in messages:
+            self.receive_message(message, print_output=print_output)
         return self
 
     def think_and_act(self):
