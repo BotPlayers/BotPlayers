@@ -1,9 +1,19 @@
 import openai
 from typing import List
+import numpy as np
 from .util import print_in_color
 
 
-def stream_chat_completion(engine: str, messages: List[dict], print_output: bool = True, **kwargs):
+def stream_chat_completion(engine: str, messages: List[dict], print_output: bool = True,
+                           **kwargs) -> dict:
+    """Stream chat completion.
+
+    Args:
+        engine: The engine to be used.
+        messages: The messages to be sent.
+        print_output: Whether to print the output.
+        kwargs: Other arguments.
+    """
     resp = openai.ChatCompletion.create(
         model=engine,
         messages=messages,
@@ -42,3 +52,26 @@ def stream_chat_completion(engine: str, messages: List[dict], print_output: bool
     if len(function_call) > 0:
         message['function_call'] = function_call
     return message
+
+
+def get_text_embeddings(engine: str, texts: List[str], **kwargs):
+    """ Get text embeddings.
+
+    Args:
+        engine: The engine to be used.
+        texts: The texts to be embedded.
+    """
+    assert isinstance(texts, list)
+    resp = openai.Embedding.create(
+        input=[text.replace("\n", "") for text in texts], model=engine,
+        **kwargs
+    )
+    embeddings = [None] * len(texts)
+    for d in resp['data']:
+        embeddings[d['index']] = d['embedding']
+    return np.array(embeddings)
+
+
+if __name__ == '__main__':
+    print(get_text_embedding('text-embedding-ada-002',
+          ['Hello world!', 'How are you doing?']))
