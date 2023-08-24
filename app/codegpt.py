@@ -27,7 +27,7 @@ def run_jupyter_code(script, globals=None, locals=None):
 class Env(InteractiveSpace):
     workspace: str = '.workspace'
 
-    @agent_callable
+    @agent_callable()
     def run_code(self, python_code: str):
         """Run python code.
         Yes! You can run any Python code here to accomplish anything you want!
@@ -51,7 +51,7 @@ class Env(InteractiveSpace):
         os.chdir(prevdir)
         return {'result': result}
 
-    @agent_callable
+    @agent_callable()
     def list_files(self):
         """List all files in the current directory.
 

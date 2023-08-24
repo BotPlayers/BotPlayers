@@ -10,7 +10,7 @@ class IsUseful:
         ignore_none_function_messages=False
     ).receive_messages(
         parse_experience_data(yaml.safe_load(
-            open('app/memory_tests/is_useful.yaml', 'r'))),
+            open('app/experiments/is_useful.yaml', 'r'))),
         print_output=False
     )
 
@@ -33,7 +33,7 @@ class IsSufficient:
         ignore_none_function_messages=False
     ).receive_messages(
         parse_experience_data(yaml.safe_load(
-            open('app/memory_tests/is_sufficient.yaml', 'r'))),
+            open('app/experiments/is_sufficient.yaml', 'r'))),
         print_output=False
     )
 
@@ -63,7 +63,7 @@ class Database(InteractiveSpace):
     is_useful = IsUseful()
     is_sufficient = IsSufficient()
 
-    @agent_callable
+    @agent_callable()
     def find_info(self, user_question: str):
         """
         Find the information from the database that are useful to answer the user's question.

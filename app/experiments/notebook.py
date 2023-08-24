@@ -13,7 +13,7 @@ class Notebook(InteractiveSpace):
     info = []
     keyword2info_ids: Dict[str, List[int]] = dict()
 
-    @agent_callable
+    @agent_callable()
     def record_info(self, info: str, keywords: str, importance: int = 0):
         f"""
         Record an important information into the notebook.
@@ -39,7 +39,7 @@ class Notebook(InteractiveSpace):
             self.keyword2info_ids[keyword].append(info_id)
         return {'result': 'success'}
 
-    @agent_callable
+    @agent_callable()
     def search_info(self, keywords: str):
         """
         Search information from notebook using keywords.
@@ -63,7 +63,7 @@ class Notebook(InteractiveSpace):
             info_ids = info_ids[:self.seach_info_limit]
             return {'result': 'success', 'content': to_markdown([self.info[info_id] for info_id in info_ids])}
 
-    @agent_callable
+    @agent_callable()
     def list_keywords(self):
         """
         List all keywords in the notebook.

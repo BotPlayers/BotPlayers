@@ -45,7 +45,7 @@ class Explorer(InteractiveSpace):
         print_in_color(text, 'orange')
         return text
 
-    @agent_callable
+    @agent_callable()
     def search(self, text: str):
         """
         Search something on Google.
@@ -69,7 +69,7 @@ class Explorer(InteractiveSpace):
         keys = {'title', 'link', 'snippet'}
         return {key: value for key, value in results['organic_results'][0].items() if key in keys}
 
-    @agent_callable
+    @agent_callable()
     def browse_webpage(self, url: str):
         """Browse a webpage.
 
@@ -94,7 +94,7 @@ class Explorer(InteractiveSpace):
         trimmed_text = self.last_result_visible_part()
         return {'a11y_snapshot': trimmed_text}
 
-    @agent_callable
+    @agent_callable()
     def backward_webpage(self):
         """Go back to the previous webpage.
 
@@ -116,7 +116,7 @@ class Explorer(InteractiveSpace):
         trimmed_text = self.last_result_visible_part()
         return {'a11y_snapshot': trimmed_text}
 
-    @agent_callable
+    @agent_callable()
     def show_more(self):
         """Show more of the last result."""
         self.last_result_starting_idx += self.max_visible_tokens

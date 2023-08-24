@@ -12,10 +12,19 @@ AGENT_PARAM_NAME = 'agent'
 AGENT_NAME_PARAM_NAME = 'agent_name'
 
 
-def agent_callable(function):
+class agent_callable:
     """ Decorator to mark a function as agent callable. """
-    function.__agent_callable__ = True
-    return function
+
+    def __init__(self, function_name: Optional[str] = None):
+        self.function_name = function_name
+
+    def __call__(self, function):
+        function.__agent_callable__ = True
+        if self.function_name is not None:
+            function.__agent_callable_function_name__ = self.function_name
+        else:
+            function.__agent_callable_function_name__ = function.__name__
+        return function
 
 
 class InteractiveSpace:
@@ -85,7 +94,7 @@ def _parse_agent_callable_function(function):
 
     # Register the function
     func_sig = {
-        'name': function.__name__,
+        'name': function.__agent_callable_function_name__,
         'description': function_description,
         'parameters': {
             'type': 'object',
@@ -119,9 +128,10 @@ def _parse_interactive_objects(interactive_objects: List[Any]):
             assert obj.__agent_callable__, f'Object {obj} is not agent callable.'
             functions = [obj]
         for func in functions:
-            assert func.__name__ not in function_info_table, f'Function {func.__name__} already registered.'
-            function_info_table[func.__name__] = _parse_agent_callable_function(
-                func)
+            assert func.__agent_callable_function_name__ not in function_info_table, \
+                f'Function {func.__agent_callable_function_name__} already registered.'
+            function_info_table[func.__agent_callable_function_name__] = \
+                _parse_agent_callable_function(func)
     return function_info_table
 
 

@@ -11,7 +11,7 @@ def read_prompt(prompt_file, **args):
 class ChatRoom(InteractiveSpace):
     agents: Dict[str, Agent] = dict()
 
-    @agent_callable
+    @agent_callable()
     def get_person_names_in_this_room(self):
         """Get the names of all persons in this room.
 
@@ -21,7 +21,7 @@ class ChatRoom(InteractiveSpace):
         names = [agent.name for agent in self.agents.values()]
         return {'names': names}
 
-    @agent_callable
+    @agent_callable()
     def say_to_everyone(self, agent_name: str, content: str):
         """Say something to everyone in this room.
 
@@ -34,7 +34,7 @@ class ChatRoom(InteractiveSpace):
                     {'role': 'user', 'content': f'[{agent_name} says in public]: {content}'})
         return '[everyone might heard what you say]'
 
-    @agent_callable
+    @agent_callable()
     def say_to_person(self, agent_name: str, person_name: str, content: str):
         """Say something to a person in this room privately.
 
@@ -50,7 +50,7 @@ class ChatRoom(InteractiveSpace):
             {'role': 'user', 'content': f'[{agent_name} says to you in private]: {content}'})
         return f'[{person_name} might heard what you say]'
 
-    @agent_callable
+    @agent_callable()
     def logout(self, agent_name: str):
         """Logout from this chat room.
 
