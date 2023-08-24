@@ -72,7 +72,7 @@ A possible output is
 ![](./media/demo_output.png)
 
 
-Besides just calling stateless functions, bots can also interact with a **stateful and customized environment** easily through `InteractiveSpace`!
+Besides just calling stateless functions, bots can also interact with a **stateful and customized environment** easily through class instances that have `agent_callable` member functions!
 Check out this [tutorial](./tutorial.ipynb) to see how to accomplish this in less than 100 lines.
 
 

@@ -1,5 +1,5 @@
 from typing import Dict
-from botplayers import agent_callable, InteractiveSpace, Agent
+from botplayers import agent_callable, Agent
 
 
 def read_prompt(prompt_file, **args):
@@ -8,7 +8,7 @@ def read_prompt(prompt_file, **args):
         return content.format(**args)
 
 
-class ChatRoom(InteractiveSpace):
+class ChatRoom:
     agents: Dict[str, Agent] = dict()
 
     @agent_callable()

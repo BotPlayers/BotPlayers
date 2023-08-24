@@ -1,9 +1,9 @@
 import yaml
-from botplayers import agent_callable, Agent, InteractiveSpace
+from botplayers import agent_callable, Agent
 from botplayers.function import is_related, is_sufficient
 
 
-class Database(InteractiveSpace):
+class Database:
     info_list = [
         'Alice is born in 1990.',
         'Bob is born in 1991.',

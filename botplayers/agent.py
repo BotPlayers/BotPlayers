@@ -31,18 +31,17 @@ class agent_callable:
         return function
 
 
-class InteractiveSpace:
-    def get_callable_functions(self):
-        functions = []
-        for func in dir(self):
-            if func.startswith('__'):
-                continue
-            fun = getattr(self, func)
-            if not hasattr(fun, '__agent_callable__'):
-                continue
-            if fun.__agent_callable__:
-                functions.append(fun)
-        return functions
+def _get_callable_functions_from_object(obj):
+    functions = []
+    for func in dir(obj):
+        if func.startswith('__'):
+            continue
+        fun = getattr(obj, func)
+        if not hasattr(fun, '__agent_callable__'):
+            continue
+        if fun.__agent_callable__:
+            functions.append(fun)
+    return functions
 
 
 @lru_cache()
@@ -124,13 +123,14 @@ def _parse_interactive_objects(interactive_objects: List[Any]):
     """ Install interactive objects. """
     function_info_table = {}
     for obj in interactive_objects:
-        if isinstance(obj, InteractiveSpace):
-            functions = obj.get_callable_functions()
-        else:
+        # check whether obj is a function
+        if inspect.isfunction(obj):
             assert hasattr(
                 obj, '__agent_callable__'), f'Object {obj} is not agent callable.'
             assert obj.__agent_callable__, f'Object {obj} is not agent callable.'
             functions = [obj]
+        else:
+            functions = _get_callable_functions_from_object(obj)
         for func in functions:
             assert func.__agent_callable_function_name__ not in function_info_table, \
                 f'Function {func.__agent_callable_function_name__} already registered.'
@@ -151,7 +151,8 @@ class Agent:
         prompt (Union[str, list], optional): The prompt to initialize the agent's memory. Defaults to None.
         engine (str, optional): The GPT engine to use. Defaults to 'gpt-3.5-turbo-16k'.
         interactive_objects (list, optional): A list of interactive objects to install. Defaults to [].
-            Each interactive object should be either an InteractiveSpace or an agent callable function (decorated by agent_callable).
+            Each interactive object should be either an agent callable function (decorated by agent_callable) or an object
+            that has agent callable member functions (decorated by agent_callable).
         function_call_repeats (int, optional): The number of times to repeat function calls in agent.think_and_act().
         ignore_none_function_messages (bool, optional): Whether to ignore messages that does not involve function calling.
     """

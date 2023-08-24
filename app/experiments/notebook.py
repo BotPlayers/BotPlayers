@@ -1,12 +1,12 @@
 from typing import List, Dict
-from botplayers import agent_callable, Agent, InteractiveSpace
+from botplayers import agent_callable, Agent
 
 
 def to_markdown(list_data: list):
     return '\n'.join([f'- {item}' for item in list_data])
 
 
-class Notebook(InteractiveSpace):
+class Notebook:
     info_len_limit = 500
     seach_info_limit = 10
 

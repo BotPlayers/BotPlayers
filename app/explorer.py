@@ -3,13 +3,13 @@ import yaml
 import tiktoken
 from playwright.sync_api import sync_playwright
 
-from botplayers import Agent, InteractiveSpace, agent_callable
+from botplayers import Agent, agent_callable
 from botplayers.util import print_in_color
 
 TOKEN_ENCODING = tiktoken.encoding_for_model('gpt-3.5-turbo')
 
 
-class Explorer(InteractiveSpace):
+class Explorer:
     playwright = None
     browser = None
     page = None

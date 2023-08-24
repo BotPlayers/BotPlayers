@@ -1,5 +1,5 @@
 import os
-from botplayers import agent_callable, Agent, InteractiveSpace
+from botplayers import agent_callable, Agent
 from botplayers.util import print_in_color
 
 
@@ -24,7 +24,7 @@ def run_jupyter_code(script, globals=None, locals=None):
         return exec(script, globals, locals)
 
 
-class Env(InteractiveSpace):
+class Env:
     workspace: str = '.workspace'
 
     @agent_callable()
