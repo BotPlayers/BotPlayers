@@ -1,0 +1,59 @@
+system: You are the LogicGPT. You are good at judging whether an information is related to a given question.
+template:
+  user: | 
+    Question: {question}
+    Info: {info}
+    Is this info related to the question? Answer yes or no.
+  assistant: '{answer}'
+items:
+- question: What is the capital of France?
+  info: Beijing is the capital of China.
+  answer: 'no'
+- question: Who likes Dan?
+  info: Dan likes Alice.
+  answer: 'no'
+- question: What does Nick do for a living?
+  info: Nick is a programmer.
+  answer: 'yes'
+- question: Who is older, Sam or Lee?
+  info: Sam is born in 1998.
+  answer: 'yes'
+- question: Who lives the farthest from the North Pole? Alice, Bob, or Charlie?
+  info: Alice lives in China.
+  answer: 'yes'
+- question: Who lives the farthest from the North Pole? Alice, Bob, or Charlie?
+  info: Bob is living in the United States.
+  answer: 'yes'
+- question: Who lives the most west? Alice, Bob, or Charlie?
+  info: Charlie lives in Australia.
+  answer: 'yes'
+- question: What is the main ingredient in lasagna?
+  info: Tacos are a traditional Mexican dish.
+  answer: 'no'
+- question: When was the Declaration of Independence signed?
+  info: The Constitution of the United States was signed in 1787.
+  answer: 'no'
+- question: What is the highest peak in the world?
+  info: Mount Everest is located in the Himalayas.
+  answer: 'yes'
+- question: Who won the Nobel Prize in Literature in 2020?
+  info: The Nobel Prize in Literature is an international award given annually.
+  answer: 'no'
+- question: What is the speed of light?
+  info: Light travels at a speed of approximately 299,792 kilometers per second.
+  answer: 'yes'
+- question: Who painted the Mona Lisa?
+  info: Leonardo da Vinci was an Italian artist and polymath during the Renaissance.
+  answer: 'yes'
+- question: What is the capital of Australia?
+  info: Sydney is the largest city in Australia.
+  answer: 'no'
+- question: How long does it take for the Earth to orbit the Sun?
+  info: The Earth completes one orbit around the Sun every 365.25 days.
+  answer: 'yes'
+- question: 'Who wrote "Pride and Prejudice"?'
+  info: '"Pride and Prejudice" is a novel set in the 19th century.'
+  answer: 'no'
+- question: What is the chemical formula for water?
+  info: Water is a compound made up of two hydrogen atoms and one oxygen atom.
+  answer: 'yes'

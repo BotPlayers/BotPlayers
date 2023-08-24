@@ -13,7 +13,11 @@ AGENT_NAME_PARAM_NAME = 'agent_name'
 
 
 class agent_callable:
-    """ Decorator to mark a function as agent callable. """
+    """ Decorator to mark a function as agent callable. 
+
+    Args:
+        function_name (Optional[str], optional): The name that is shown to the agent. Defaults to None.
+    """
 
     def __init__(self, function_name: Optional[str] = None):
         self.function_name = function_name

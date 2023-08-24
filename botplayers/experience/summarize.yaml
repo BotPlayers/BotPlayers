@@ -1,0 +1,41 @@
+system: You are SummarizeGPT. You are good at summarizing a given piece of information into a few bullet points.
+template:
+  user: | 
+    Info: {info}
+    Summarize the info: 
+  assistant: '{summary}'
+items:
+- info: >
+    In order to Turkify the local population, in June 1927 the Law 1164 was passed which allowed the creation of 
+    Inspectorates-General (Turkish: Umumi Müffetişlik, UM). The Diyarbakır province was therefore included in the so-called 
+    First Inspectorate General (Turkish: Birinci Umumi Müffetişlik), which span over the provinces of Hakkâri, Siirt, Van, 
+    Mardin, Bitlis, Sanlıurfa, Elaziğ and Diyarbakır. The first UM was created on the 1 January 1928 and centered in Diyarbakır. 
+    The UM was governed by an Inspector General, who governed with a wide-ranging authority over civilian, juridical and military matters. 
+    The office of the Inspector General was dissolved in 1952 during the government of the Democrat Party. 
+    The Diyarbakır province though was still banned for foreign citizens until 1965. Within the policy of turkification, 
+    during the 1930s, several place-names in the province were renamed into names which denoted a Turkish origin.
+  summary: |
+    - Law 1164 passed in June 1927, allowing the creation of Inspectorates-General (UM) in Turkey.
+    - The Diyarbakır province was included in the First Inspectorate General, which spanned multiple provinces.
+    - The First UM was established on January 1, 1928, centered in Diyarbakır.
+    - The UM had extensive authority over civilian, juridical, and military matters.
+    - The office of the Inspector General was dissolved in 1952 during the Democrat Party's government.
+    - Diyarbakır was still closed to foreign nationals until 1965.
+    - As part of a Turkification policy, several place-names in the province were changed to reflect Turkish origins in the 1930s.
+- info: >
+    Duckworth grew up in Southend-on-Sea, Essex. Get Cape was signed to Atlantic Records in March 2006, after playing many gigs, 
+    both with punk rock band Silverskin and as Get Cape. As Get Cape, Duckworth has collaborated with Billy Bragg, Nitin Sawhney, 
+    Shlomo, Killa Kela, Baba Maal, Flea, Kate Nash and many others with his participation in many events for Africa Express. 
+    Duckworth co-organised The Demolition Ball – the last night at the London Astoria venue before it was knocked down in January 2009.
+    He had previously headlined at the Astoria for his 21st birthday party.
+    After 10 years, Duckworth decided to end Get Cape. Wear Cape. Fly and to continue making under his own name. 
+    The "last ever" show under the Get Cape moniker was held at The Forum, Kentish Town on 12 September 2014.
+    In May 2017, Duckworth announced that he was resurrecting the Get Cape name, with the release of the single Optimist, 
+    and subsequently announced a new full-length album, Young Adult, due for release in January 2018.
+  summary: |
+    - Duckworth, whose stage name is Get Cape, grew up in Southend-on-Sea, Essex.
+    - He was signed to Atlantic Records in March 2006 after performing many gigs, both as part of the punk rock band Silverskin and solo as Get Cape.
+    - Duckworth has collaborated with numerous artists like Billy Bragg, Nitin Sawhney, Shlomo, Killa Kela, Baba Maal, Flea, and Kate Nash, and has been a part of many events for Africa Express.
+    - He co-organised The Demolition Ball, which marked the last night at the London Astoria venue before its demolition in January 2009. He had previously celebrated his 21st birthday by headlining a show at the same venue.
+    - After 10 years, Duckworth chose to discontinue using the stage name Get Cape. Wear Cape. Fly, and began creating music under his own name. The final show under the Get Cape moniker was held at The Forum, Kentish Town on 12 September 2014.
+    - In May 2017, Duckworth announced the revival of the Get Cape name with the release of the single "Optimist". He also announced a new full-length album, Young Adult, set for release in January 2018.

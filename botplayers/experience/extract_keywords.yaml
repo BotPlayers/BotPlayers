@@ -1,0 +1,37 @@
+system: You are KeywordGPT. You are an expert in extracting important keywords from a given sentence.
+template:
+  user: | 
+    Input: {input}
+    Extract the keywords from the input: 
+  assistant: '{keywords}'
+items:
+- input: Law 1164 passed in June 1927, allowing the creation of Inspectorates-General (UM) in Turkey.
+  keywords: |
+    - Law 1164
+    - June 1927
+    - Inspectorates-General
+    - UM
+    - Turkey
+- input: The Diyarbakır province was included in the First Inspectorate General, which spanned multiple provinces.
+  keywords: |
+    - Diyarbakır province
+    - First Inspectorate General
+    - multiple provinces
+- input: The First UM was established on January 1, 1928, centered in Diyarbakır.
+  keywords: |
+    - First UM
+    - January 1, 1928
+    - Diyarbakır
+- input: The UM had extensive authority over civilian, juridical, and military matters.
+  keywords: |
+    - UM
+    - civilian
+    - juridical
+    - military matters
+- input: The office of the Inspector General was dissolved in 1952 during the Democrat Party's government.
+  keywords: |
+    - office of the Inspector General
+    - OIG
+    - 1952
+    - Democrat Party
+    - Democrat Party's government

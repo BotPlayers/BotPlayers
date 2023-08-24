@@ -1,0 +1,56 @@
+system: You are the LogicGPT. You are good at judging whether the current info are sufficient to answer a given question.
+template:
+  user: | 
+    Question: {question}
+    Info: {info}
+    Are these info sufficient to answer the question? Answer yes or no.
+  assistant: '{answer}'
+items:
+- question: What is the capital of France?
+  info: Beijing is the capital of China. New York is not the capital of the United States. Germany is a country in Europe.
+  answer: 'no'
+- question: Who likes Dan?
+  info: Dan likes Alice. Alice likes Bob. Dan is from China.
+  answer: 'no'
+- question: What does Nick do for a living?
+  info: Nick is a programmer. Nick is from China. Nick likes to play basketball.
+  answer: 'yes'
+- question: Who is older, Sam or Lee?
+  info: Sam is born in 1998. Lee is from China. Sam is a programmer.
+  answer: 'no'
+- question: Where does Alice live?
+  info: Bob is from China. Alice is from the United States.
+  answer: 'no'
+- question: Who is the president of the United States?
+  info: Joe Biden is from the United States. Joe Biden is a politician. Joe Biden is the president of the United States. 
+  answer: 'yes'
+- question: What is the national language of Canada?
+  info: Ottawa is the capital of Canada. Canada is in North America. The Prime Minister of Canada is Justin Trudeau.
+  answer: 'no'
+- question: Who is Mike's best friend?
+  info: Mike lives in New York. Mike enjoys playing tennis. Mike and John play tennis every weekend.
+  answer: 'no'
+- question: What is the main color of the Spanish flag?
+  info: "The Spanish flag consists of three horizontal stripes: the top and bottom stripes are red, and the middle stripe is yellow. Spain is in Europe."
+  answer: 'yes'
+- question: Who is taller, Jessica or Ashley?
+  info: Jessica was born in 1990. Ashley was born in 1992. Both Jessica and Ashley love playing basketball.
+  answer: 'no'
+- question: Where is the Eiffel Tower located?
+  info: The Eiffel Tower is a landmark in France. It is located in the city of Paris.
+  answer: 'yes'
+- question: Who is the CEO of Microsoft in 2029?
+  info: As of 2021, Satya Nadella is the CEO of Microsoft. Microsoft is a multinational technology company headquartered in Redmond, Washington.
+  answer: 'no'
+- question: Is Alice taller than Charlie?
+  info: Alice is from China. Charlie is from the United States. Alice is 5 feet 6 inches tall. Charlie is 5 feet 8 inches tall.
+  answer: 'yes'
+- question: Is Alice taller than Charlie?
+  info: Alice is taller than Bob. Bob is taller than Charlie.
+  answer: 'yes'
+- question: Is Alice taller than Charlie?
+  info: Alice is taller than Bob. Charlie is taller than Bob.
+  answer: 'no'
+- question: Who is the tallest among Alice, Bob, and Charlie?
+  info: Bob is 5 feet 8 inches tall. Charlie is 5 feet 10 inches tall.
+  answer: 'no'

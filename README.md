@@ -27,7 +27,7 @@ Then, define a function that can be called by agents.
 4. **(IMPORTANT)** Tell agents how to call this function by writing a docstring.
 
 ```python
-@agent_callable
+@agent_callable()
 def calculator(python_math_expression: str):
     """
     A simple calculator that can do basic math operations.

@@ -1,3 +1,5 @@
+from typing import List
+
 def colorize_text_in_terminal(text: str, color: str):
     """Colorize text in terminal.
 
@@ -46,14 +48,42 @@ def print_in_color(text: str, color: str, end='\n'):
     print(colorize_text_in_terminal(text, color), end=end)
 
 
-def parse_experience_data(data: dict):
+def markdown_bullets_to_list(text: str) -> List[str]:
+    """Convert markdown bullets to a list.
+
+    Args:
+        text: The text to be converted.
+
+    Returns:
+        items: The list of items.
+    """
+    text = text.strip()
+    if text == '':
+        return []
+    if not text.startswith('- ') and not text.startswith('* '):
+        text = '- ' + text
+    items = []
+    for item in text.split('\n'):
+        item = item.strip()
+        if item.startswith('- ') or item.startswith('* '):
+            items.append(item[2:])
+        else:
+            items[-1] += item
+    return items
+
+
+def parse_experience_data(data: dict, prepend_system_message: bool = True) -> List[dict]:
     """Parse experience data.
 
     Args:
         data: The data to be parsed.
+        prepend_system_message: Whether to prepend a system message.
     """
     template = data['template']
-    msgs = [{'role': 'system', 'content': data['system']}]
+    if prepend_system_message:
+        msgs = [{'role': 'system', 'content': data['system']}]
+    else:
+        msgs = []
     for item in data['items']:
         for role, content in template.items():
             msgs.append({'role': role, 'content': content.format(**item)})
