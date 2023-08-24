@@ -1,6 +1,6 @@
 import yaml
 from botplayers import agent_callable, Agent, InteractiveSpace
-from botplayers.bots import is_related, is_sufficient
+from botplayers.function import is_related, is_sufficient
 
 
 class Database(InteractiveSpace):
