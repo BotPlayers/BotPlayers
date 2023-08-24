@@ -73,5 +73,5 @@ def get_text_embeddings(engine: str, texts: List[str], **kwargs):
 
 
 if __name__ == '__main__':
-    print(get_text_embedding('text-embedding-ada-002',
+    print(get_text_embeddings('text-embedding-ada-002',
           ['Hello world!', 'How are you doing?']))
