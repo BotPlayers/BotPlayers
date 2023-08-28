@@ -1,6 +1,4 @@
-pgvector
 openai
-psycopg2-binary
 tiktoken
 playwright
 pillow
@@ -9,3 +7,4 @@ jsonlines
 pyyaml
 opencv-python
 google-search-results
+pymilvus
