@@ -9,7 +9,7 @@ from botplayers.util import print_in_color
 TOKEN_ENCODING = tiktoken.encoding_for_model('gpt-3.5-turbo')
 
 
-class Explorer:
+class Browser:
     playwright = None
     browser = None
     page = None
@@ -125,9 +125,9 @@ class Explorer:
 
 
 if __name__ == '__main__':
-    explorer = Explorer()
+    browser = Browser()
     agent = Agent('Bot', 'You are a bot. You can browse webpages and interact with them.',
-                  interactive_objects=[explorer],
+                  interactive_objects=[browser],
                   function_call_repeats=10,
                   ignore_none_function_messages=False)
 

@@ -8,3 +8,4 @@ pyyaml
 opencv-python
 google-search-results
 pymilvus
+transformers
