@@ -1,0 +1,15 @@
+system: You are KeyInfoGPT. You are an expert in extracting important information from a given text.
+template:
+  user: | 
+    Input: {input}
+    Extract the key information from the input: 
+  assistant: '{key_info}'
+items:
+- input: I'll be in New York from June 1st to June 5th.
+  key_info: |
+    - USER will be in New York from June 1st to June 5th.
+- input: 我的名字叫张三，今年18岁，是一名大学生。
+  key_info: |
+    - USER 名字叫张三。
+    - USER 今年18岁。
+    - USER 是一名大学生。

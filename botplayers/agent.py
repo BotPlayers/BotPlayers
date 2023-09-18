@@ -4,6 +4,7 @@ import json
 import re
 from functools import lru_cache
 
+from .config import DEFAULT_ENGINE
 from .llm import stream_chat_completion
 from .util import print_in_color
 
@@ -139,17 +140,13 @@ def _parse_interactive_objects(interactive_objects: List[Any]):
     return function_info_table
 
 
-DEFAULT_FUNCTION_CALL_REPEATS = 10
-DEFAULT_IGNORE_NONE_FUNCTION_MESSAGES = False
-
-
 class Agent:
     """ An agent that can think and act.
 
     Args:
         name (str): The name of the agent.
         prompt (Union[str, list], optional): The prompt to initialize the agent's memory. Defaults to None.
-        engine (str, optional): The GPT engine to use. Defaults to 'gpt-3.5-turbo-16k'.
+        engine (str, optional): The GPT engine to use. Defaults to DEFAULT_ENGINE.
         interactive_objects (list, optional): A list of interactive objects to install. Defaults to [].
             Each interactive object should be either an agent callable function (decorated by agent_callable) or an object
             that has agent callable member functions (decorated by agent_callable).
@@ -158,7 +155,7 @@ class Agent:
     """
     name: str = ''
     memory: List[dict] = []
-    engine: str = 'gpt-3.5-turbo-16k'
+    engine: str = DEFAULT_ENGINE
     engine_args: dict = dict(temperature=1.0)
     interactive_objects: list = []
     callable_functions: dict = dict()
@@ -169,10 +166,10 @@ class Agent:
 
     def __init__(self, name: str,
                  prompt: Optional[Union[str, list]] = None,
-                 engine: str = 'gpt-3.5-turbo-16k',
+                 engine: str = DEFAULT_ENGINE,
                  interactive_objects: list = [],
-                 function_call_repeats: int = DEFAULT_FUNCTION_CALL_REPEATS,
-                 ignore_none_function_messages: bool = DEFAULT_IGNORE_NONE_FUNCTION_MESSAGES,
+                 function_call_repeats: int = 1,
+                 ignore_none_function_messages: bool = False,
                  derived_from: Optional['Agent'] = None):
         self.name = name
         self.engine = engine

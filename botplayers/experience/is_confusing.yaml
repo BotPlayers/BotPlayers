@@ -1,0 +1,49 @@
+system: |
+  You are an expert in language. You are good at judging whether there are confusing references in a sentence.
+template:
+  user: | 
+    input: {sentence}
+  assistant: |
+    Explanation: {explanation}
+    Has confusing references: {is_confusing}
+items:
+- sentence: |
+    The Diyarbakır province was therefore included in the so-called First Inspectorate General (Turkish: Birinci Umumi Müffetişlik, UM).
+  is_confusing: 'no'
+  explanation: |
+    This sentence does not have any confusing references.
+- sentence: |
+    The province was therefore included in the so-called First Inspectorate General (Turkish: Birinci Umumi Müffetişlik, UM).
+  is_confusing: 'yes'
+  explanation: |
+    This sentence has confusing references. We don't know what "The province" refers to.
+- sentence: |
+    这篇文章应好友滕子京的请求，为重修岳阳楼而写。
+  is_confusing: 'yes'
+  explanation: |
+    这句话中存在指代不明确的情况。我们不知道“这篇文章”指的是什么。我们也不知道“好友滕子京”指的是谁的好友。
+- sentence: |
+    John told Mike that he failed his exam.
+  is_confusing: 'yes'
+  explanation: |
+    这句话中存在指代不明确的情况。我们不知道“he”指的是谁。
+- sentence: |
+    整篇文章将记叙、写景、抒情、议论融为一体
+  is_confusing: 'yes'
+  explanation: |
+    这句话中存在指代不明确的情况。我们不知道“整篇文章”指的是哪篇文章。
+- sentence: |
+    他们在一起吃饭，他们在一起看电影。
+  is_confusing: 'yes'
+  explanation: |
+    这句话中存在指代不明确的情况。我们不知道“他们”指的是谁。
+- sentence: |
+    The film profoundly reveals the complexity and resilience of human nature
+  is_confusing: 'yes'
+  explanation: |
+    This sentence has confusing references. We don't know what "The film" refers to.
+- sentence: |
+    《肖申克的救赎》is a movie that tells the story of a man wrongly accused and imprisoned, but maintains his beliefs and eventually escapes from prison.
+  is_confusing: 'no'
+  explanation: |
+    This sentence does not have any confusing references.

@@ -3,12 +3,13 @@ from typing import Tuple, List
 from pathlib import Path
 from .agent import Agent, agent_callable
 from .util import parse_experience_data, markdown_bullets_to_list
+from .config import DEFAULT_ENGINE
 
 EXPERIENCE_ROOT = Path(__file__).parent / 'experience'
 BOTS = dict()
 
 
-def _load_bot(name: str, engine: str = 'gpt-3.5-turbo') -> Tuple[Agent, str]:
+def _load_bot(name: str, engine: str = DEFAULT_ENGINE) -> Tuple[Agent, str]:
     global BOTS
     if name in BOTS:
         return BOTS[name]
@@ -83,6 +84,33 @@ def is_sufficient(question: str, info: str) -> bool:
 
 
 @agent_callable()
+def is_confusing(sentence: str) -> Tuple[bool, str]:
+    """
+    Judge whether there are confusing references in the sentence.
+
+    Args:
+        sentence: the sentence.
+
+    Returns:
+        result: whether the sentence has confusing references.
+        explanation: the explanation of the result.
+    """
+    agent, template_user = _load_bot('is_confusing')
+    content = agent.receive_message(
+        {'role': 'user', 'content': template_user.format(sentence=sentence)}
+    ).think_and_act().last_message()['content']  # content should be like 'Explanation: ...\nHas confusing references: yes/no'
+
+    assert content.count('Explanation: ') == 1
+    assert content.count('Has confusing references: ') == 1
+
+    result = content.split(
+        'Has confusing references:')[-1].strip().lower().startswith('y')
+    explanation = content.split('Explanation:')[-1].split(
+        'Has confusing references:')[0].strip()
+    return result, explanation
+
+
+@agent_callable()
 def summarize(info: str) -> List[str]:
     """
     Summarize the info.
@@ -96,6 +124,24 @@ def summarize(info: str) -> List[str]:
     agent, template_user = _load_bot('summarize')
     bullets_in_markdown: str = agent.receive_message(
         {'role': 'user', 'content': template_user.format(info=info)}
+    ).think_and_act().last_message()['content']
+    return markdown_bullets_to_list(bullets_in_markdown)
+
+
+@agent_callable()
+def extract_info(info: str) -> List[str]:
+    """
+    Extract info from the info.
+
+    Args:
+        info: the info.
+
+    Returns:
+        result: the extracted info.
+    """
+    agent, template_user = _load_bot('extract_info')
+    bullets_in_markdown = agent.receive_message(
+        {'role': 'user', 'content': template_user.format(input=info)}
     ).think_and_act().last_message()['content']
     return markdown_bullets_to_list(bullets_in_markdown)
 

@@ -1,8 +1,11 @@
-system: You are SummarizeGPT. You are good at summarizing a given piece of information into a few bullet points.
+system: |
+  You are SummarizeGPT. You are good at summarizing a given piece of information into a few bullet points. 
+  * The summary should be in the same language as the information.
+  * Each bullet point must be an independent sentence. There can be no references such as 'this paragraph' or 'this article'.
 template:
   user: | 
     Info: {info}
-    Summarize the info: 
+    Summarized bullets: 
   assistant: '{summary}'
 items:
 - info: >

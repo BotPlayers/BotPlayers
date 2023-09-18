@@ -1,54 +1,52 @@
+from datetime import datetime
+from dataclasses import dataclass
 import numpy as np
-from typing import List
-from pymilvus import (
-    connections,
-    utility,
-    FieldSchema, CollectionSchema, DataType,
-    Collection,
-)
+from typing import List, Dict
+import faiss
+
+from .config import DEFAULT_ENGINE
+from .llm import get_text_embeddings
+from .util import count_message_tokens
 
 
-class VectorDB:
-    def __init__(self, name: str, embedding_dim: int) -> None:
-        self.name = name
-        connections.connect(name, host="localhost", port="19530")
-        if not utility.has_collection("vector_db", using=self.name):
-            fields = [
-                FieldSchema(name="pk", dtype=DataType.INT64,
-                            is_primary=True, auto_id=True),
-                FieldSchema(name="embeddings",
-                            dtype=DataType.FLOAT_VECTOR, dim=embedding_dim),
-                FieldSchema(name="text", dtype=DataType.VARCHAR,
-                            max_length=500),
-                FieldSchema(name="timestamp", dtype=DataType.INT64),
-                FieldSchema(name="tags", dtype=DataType.VARCHAR, is_array=True,
-                            max_length=20)
-            ]
-            schema = CollectionSchema(fields, "vector db")
-            self.collection = Collection(
-                "vector_db", schema, consistency_level="Strong",
-                using=self.name)
-            self.collection.flush()
-            self.collection.create_index(
-                'embeddings', {"index_type": "IVF_FLAT", "metric_type": "L2", "params": {"nlist": 128}})
-        else:
-            self.collection = Collection("vector_db", using=self.name)
-        self.collection.load()
 
-    def insert(self, embeddings: np.ndarray, texts: List[str]) -> None:
-        assert len(embeddings) == len(texts)
-        entities = [
-            {"embeddings": embedding, "text": text}
-            for embedding, text in zip(embeddings, texts)
-        ]
-        self.collection.insert(entities)
-        self.collection.flush()
 
-    def search(self, embeddings: np.ndarray, top_k: int = 10) -> List[List[int]]:
-        search_params = {
-            "metric_type": "L2",
-            "params": {"nprobe": 128, "nlist": 4096},
-        }
-        res = self.collection.search(
-            embeddings, "embeddings", limit=top_k, params=search_params)
-        return res
+
+@dataclass
+class MemUnit:
+    datetime: datetime
+    importance: float
+    content: str
+    keywords: List[str]
+
+
+
+class LongMem:
+    units: List[MemUnit]
+    keywords_to_units: Dict[str, List[int]]
+    units_index: faiss.IndexFlatL2
+    keywords_index: faiss.IndexFlatL2
+
+    def __init__(self, embedding_engine:str = 'text-embedding-ada-002'):
+        self.units = []
+        self.index = faiss.IndexFlatL2(512)
+        self.embedding_engine = embedding_engine
+
+    def add(self, units: List[MemUnit]):
+        ids = [len(self.units) + i for i in range(len(units))]
+        self.units += units
+        embeddings = get_text_embeddings(self.embedding_engine, [unit.content for unit in units])
+        self.index.add_with_ids(embeddings, np.array(ids, dtype=np.int64))
+
+
+
+class Memory:
+    engine: str = DEFAULT_ENGINE
+    messages: List[dict] = []
+    total_num_tokens: int = 0
+
+    def add_message(self, message: dict):
+        self.messages.append(message)
+        self.total_num_tokens += count_message_tokens([message], self.engine)
+        
+

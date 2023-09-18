@@ -1,8 +1,6 @@
 import openai
 from typing import List
 import numpy as np
-import torch
-import transformers
 
 from .util import print_in_color
 
